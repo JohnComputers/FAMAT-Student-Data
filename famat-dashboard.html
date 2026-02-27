@@ -7,1222 +7,386 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-
 <style>
-/* ═══════════════════════════════════════════════
-   ROOT VARIABLES
-═══════════════════════════════════════════════ */
 :root {
-  --bg:      #060912;
-  --bg2:     #0d1220;
-  --bg3:     #141c2e;
-  --bg4:     #1c2640;
-  --gold:    #f0c040;
-  --gold2:   #fad56a;
-  --gold3:   rgba(240,192,64,0.12);
-  --blue:    #4f8ef7;
-  --blue2:   #7aabff;
-  --green:   #34d399;
-  --red:     #f87171;
-  --amber:   #fb923c;
-  --text:    #e8eaf2;
-  --text2:   #9aa3bc;
-  --text3:   #5a6480;
-  --border:  rgba(240,192,64,0.18);
-  --border2: rgba(255,255,255,0.06);
-  --shadow:  0 20px 60px rgba(0,0,0,0.6);
-  --radius:  3px;
-  --mono:    'JetBrains Mono', monospace;
-  --display: 'Crimson Pro', serif;
-  --num:     'Bebas Neue', sans-serif;
-}
-
-/* ═══════════════════════════════════════════════
-   RESET + BASE
-═══════════════════════════════════════════════ */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
-body {
-  font-family: 'Crimson Pro', serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  overflow-x: hidden;
-  font-size: 16px;
-  line-height: 1.5;
-}
-button { cursor: pointer; font-family: inherit; }
-input, select { font-family: inherit; }
-a { color: inherit; text-decoration: none; }
-
-/* scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--bg2); }
-::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text3); }
-
-/* ═══════════════════════════════════════════════
-   NOISE TEXTURE OVERLAY
-═══════════════════════════════════════════════ */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-  pointer-events: none;
-  z-index: 9999;
-  opacity: 0.4;
-}
-
-/* ═══════════════════════════════════════════════
-   AUTH PAGE
-═══════════════════════════════════════════════ */
-#auth-page {
-  display: none;
-  min-height: 100vh;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-}
-#auth-page.visible { display: flex; }
-
-.auth-bg {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 60% 60% at 15% 50%, rgba(240,192,64,0.07) 0%, transparent 70%),
-    radial-gradient(ellipse 50% 80% at 85% 20%, rgba(79,142,247,0.05) 0%, transparent 60%),
-    linear-gradient(160deg, #060912 0%, #0a1020 50%, #060912 100%);
-}
-
-.auth-grid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(240,192,64,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(240,192,64,0.03) 1px, transparent 1px);
-  background-size: 48px 48px;
-}
-
-/* big decorative number */
-.auth-deco {
-  position: absolute;
-  font-family: var(--num);
-  font-size: 40vw;
-  color: rgba(240,192,64,0.015);
-  line-height: 1;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  user-select: none;
-  pointer-events: none;
-  white-space: nowrap;
-}
-
-.auth-card {
-  position: relative;
-  width: 460px;
-  max-width: 95vw;
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0;
-  box-shadow: var(--shadow), 0 0 100px rgba(240,192,64,0.06);
-  overflow: hidden;
-}
-
-.auth-card-header {
-  padding: 40px 44px 28px;
-  border-bottom: 1px solid var(--border2);
-  position: relative;
-}
-
-.auth-card-header::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent 0%, var(--gold) 30%, var(--gold2) 50%, var(--gold) 70%, transparent 100%);
-}
-
-.auth-wordmark {
-  font-family: var(--num);
-  font-size: 42px;
-  letter-spacing: 8px;
-  color: var(--gold);
-  line-height: 1;
-  display: block;
-}
-
-.auth-sub {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 3px;
-  color: var(--text3);
-  text-transform: uppercase;
-  margin-top: 6px;
-}
-
-.auth-tabs {
-  display: flex;
-  margin-top: 20px;
-  gap: 0;
-  background: var(--bg3);
-  border-radius: 2px;
-  padding: 3px;
-}
-
-.auth-tab {
-  flex: 1;
-  padding: 9px;
-  background: none;
-  border: none;
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: var(--text3);
-  border-radius: 1px;
-  transition: all 0.2s;
-}
-.auth-tab.active { background: var(--gold3); color: var(--gold); }
-
-.auth-body { padding: 28px 44px 36px; }
-
-.field { margin-bottom: 16px; }
-.field label {
-  display: block;
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--text3);
-  margin-bottom: 7px;
-}
-.field input {
-  width: 100%;
-  padding: 12px 15px;
-  background: var(--bg3);
-  border: 1px solid var(--border2);
-  border-radius: var(--radius);
-  color: var(--text);
-  font-family: var(--mono);
-  font-size: 13px;
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-.field input:focus {
-  border-color: var(--gold);
-  box-shadow: 0 0 0 3px rgba(240,192,64,0.08);
-}
-
-.btn-gold {
-  width: 100%;
-  padding: 14px;
-  background: var(--gold);
-  border: none;
-  border-radius: var(--radius);
-  color: var(--bg);
-  font-family: var(--mono);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
-  margin-top: 6px;
-}
-.btn-gold:hover { background: var(--gold2); box-shadow: 0 4px 20px rgba(240,192,64,0.3); }
-.btn-gold:active { transform: scale(0.99); }
-.btn-gold:disabled { opacity: 0.45; cursor: not-allowed; }
-
-.auth-notice {
-  margin-top: 14px;
-  padding: 11px 14px;
-  border-radius: var(--radius);
-  font-family: var(--mono);
-  font-size: 12px;
-  text-align: center;
-  display: none;
-  line-height: 1.5;
-}
-.auth-notice.err { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.25); color: var(--red); }
-.auth-notice.ok  { background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.25); color: var(--green); }
-
-/* ═══════════════════════════════════════════════
-   TOP BAR
-═══════════════════════════════════════════════ */
-#app { display: none; min-height: 100vh; }
-
-.topbar {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  height: 56px;
-  background: rgba(6,9,18,0.95);
-  border-bottom: 1px solid var(--border2);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 28px;
-  z-index: 200;
-}
-
-.topbar-logo {
-  font-family: var(--num);
-  font-size: 24px;
-  letter-spacing: 5px;
-  color: var(--gold);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.topbar-logo .dot {
-  width: 6px;
-  height: 6px;
-  background: var(--gold);
-  border-radius: 50%;
-  display: inline-block;
-}
-
-.topbar-center {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
-/* Division tabs in topbar */
-.div-tab {
-  padding: 7px 16px;
-  background: none;
-  border: none;
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--text3);
-  border-radius: 2px;
-  transition: all 0.15s;
-  white-space: nowrap;
-}
-.div-tab:hover { color: var(--text2); background: var(--bg3); }
-.div-tab.active { color: var(--gold); background: var(--gold3); }
-
-.topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.nav-pill {
-  padding: 7px 14px;
-  background: none;
-  border: 1px solid var(--border2);
-  border-radius: 2px;
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--text3);
-  transition: all 0.15s;
-  white-space: nowrap;
-}
-.nav-pill:hover { color: var(--text); border-color: var(--text3); }
-.nav-pill.active { color: var(--gold); border-color: var(--border); background: var(--gold3); }
-
-.user-chip {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--text3);
-  max-width: 160px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  display: none;
-}
-
-.btn-signout {
-  padding: 6px 12px;
-  background: none;
-  border: 1px solid rgba(248,113,113,0.2);
-  border-radius: 2px;
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--text3);
-  transition: all 0.15s;
-}
-.btn-signout:hover { color: var(--red); border-color: rgba(248,113,113,0.5); }
-
-/* ═══════════════════════════════════════════════
-   MAIN LAYOUT
-═══════════════════════════════════════════════ */
-.main {
-  padding-top: 56px;
-  min-height: 100vh;
-}
-
-.view {
-  display: none;
-  padding: 32px 28px;
-  max-width: 1600px;
-  margin: 0 auto;
-  animation: fadeUp 0.2s ease;
-}
-.view.active { display: block; }
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* ═══════════════════════════════════════════════
-   LOADING OVERLAY
-═══════════════════════════════════════════════ */
-.load-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(6,9,18,0.92);
-  backdrop-filter: blur(6px);
-  z-index: 500;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-  display: none;
-}
-.load-overlay.show { display: flex; }
-
-.load-wordmark {
-  font-family: var(--num);
-  font-size: 48px;
-  letter-spacing: 8px;
-  color: var(--gold);
-}
-
-.load-status {
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--text3);
-  letter-spacing: 1px;
-  min-width: 280px;
-  text-align: center;
-}
-
-.load-bar-track {
-  width: 280px;
-  height: 2px;
-  background: var(--bg4);
-  border-radius: 1px;
-  overflow: hidden;
-}
-.load-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--gold), var(--gold2));
-  border-radius: 1px;
-  width: 0%;
-  transition: width 0.3s ease;
-}
-
-/* ═══════════════════════════════════════════════
-   PAGE HEADER
-═══════════════════════════════════════════════ */
-.page-hdr {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  margin-bottom: 28px;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.page-hdr-left h1 {
-  font-family: var(--num);
-  font-size: 44px;
-  letter-spacing: 3px;
-  color: var(--text);
-  line-height: 1;
-}
-
-.page-hdr-left h1 em {
-  font-style: normal;
-  color: var(--gold);
-}
-
-.page-hdr-left p {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--text3);
-  letter-spacing: 1px;
-  margin-top: 6px;
-}
-
-/* ═══════════════════════════════════════════════
-   STAT CARDS ROW
-═══════════════════════════════════════════════ */
-.stats-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 12px;
-  margin-bottom: 24px;
-}
-
-.sc {
-  background: var(--bg2);
-  border: 1px solid var(--border2);
-  border-radius: var(--radius);
-  padding: 18px 20px;
-  position: relative;
-  overflow: hidden;
-  transition: border-color 0.2s, transform 0.15s;
-}
-.sc:hover { border-color: var(--border); transform: translateY(-1px); }
-.sc::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 1.5px;
-  background: linear-gradient(90deg, var(--gold), transparent);
-  opacity: 0.5;
-}
-.sc-label {
-  font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--text3);
-  margin-bottom: 8px;
-}
-.sc-val {
-  font-family: var(--num);
-  font-size: 38px;
-  color: var(--gold);
-  line-height: 1;
-  letter-spacing: 1px;
-}
-.sc-val.sm { font-size: 22px; }
-.sc-sub {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--text3);
-  margin-top: 4px;
-}
-
-/* ═══════════════════════════════════════════════
-   TOOLBAR
-═══════════════════════════════════════════════ */
-.toolbar {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.search-box {
-  position: relative;
-  flex: 1;
-  min-width: 220px;
-}
-.search-box input {
-  width: 100%;
-  padding: 10px 14px 10px 38px;
-  background: var(--bg2);
-  border: 1px solid var(--border2);
-  border-radius: var(--radius);
-  color: var(--text);
-  font-family: var(--mono);
-  font-size: 12px;
-  outline: none;
-  transition: border-color 0.2s;
-}
-.search-box input:focus { border-color: var(--gold); }
-.search-box input::placeholder { color: var(--text3); }
-.search-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 15px;
-  color: var(--text3);
-  pointer-events: none;
-}
-
-.sel {
-  padding: 10px 12px;
-  background: var(--bg2);
-  border: 1px solid var(--border2);
-  border-radius: var(--radius);
-  color: var(--text2);
-  font-family: var(--mono);
-  font-size: 11px;
-  outline: none;
-  cursor: pointer;
-  min-width: 150px;
-  transition: border-color 0.2s;
-}
-.sel:focus { border-color: var(--gold); }
-.sel option { background: var(--bg2); }
-
-.btn-sm {
-  padding: 10px 16px;
-  background: none;
-  border: 1px solid var(--border2);
-  border-radius: var(--radius);
-  color: var(--text3);
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  transition: all 0.15s;
-  white-space: nowrap;
-}
-.btn-sm:hover { color: var(--gold); border-color: var(--border); }
-.btn-sm.active { color: var(--gold); background: var(--gold3); border-color: var(--border); }
-
-/* ═══════════════════════════════════════════════
-   TABLE
-═══════════════════════════════════════════════ */
-.tbl-wrap {
-  background: var(--bg2);
-  border: 1px solid var(--border2);
-  border-radius: var(--radius);
-  overflow: hidden;
-}
-
-.tbl-scroll { overflow-x: auto; }
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 800px;
-}
-
-thead th {
-  padding: 12px 16px;
-  text-align: left;
-  font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--text3);
-  background: linear-gradient(180deg, var(--bg3) 0%, var(--bg2) 100%);
-  border-bottom: 1px solid var(--border2);
-  white-space: nowrap;
-  cursor: pointer;
-  user-select: none;
-  transition: color 0.15s;
-}
-thead th:hover { color: var(--gold); }
-thead th.sorted { color: var(--gold); }
-
-tbody tr {
-  border-bottom: 1px solid rgba(255,255,255,0.03);
-  cursor: pointer;
-  transition: background 0.1s;
-}
-tbody tr:last-child { border-bottom: none; }
-tbody tr:hover { background: rgba(240,192,64,0.04); }
-
-tbody td {
-  padding: 11px 16px;
-  font-size: 14px;
-}
-
-.rank-num {
-  font-family: var(--num);
-  font-size: 20px;
-  letter-spacing: 1px;
-  line-height: 1;
-}
-.rank-1 { color: var(--gold); }
-.rank-2 { color: #b0b8c8; }
-.rank-3 { color: #cd7f32; }
-.rank-n { color: var(--text3); }
-
-.td-name {
-  font-family: var(--display);
-  font-weight: 600;
-  font-size: 15px;
-  color: var(--text);
-}
-
-.td-school {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--blue2);
-}
-
-.td-score {
-  font-family: var(--num);
-  font-size: 22px;
-  color: var(--gold2);
-  letter-spacing: 1px;
-}
-
-.td-mono {
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--text2);
-}
-
-.td-green { color: var(--green); }
-.td-red   { color: var(--red); }
-.td-dim   { color: var(--text3); }
-
-.td-acc {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.mini-bar {
-  width: 50px;
-  height: 3px;
-  background: var(--bg4);
-  border-radius: 2px;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-.mini-bar-fill {
-  height: 100%;
-  background: var(--green);
-  border-radius: 2px;
-}
-
-.tbl-footer {
-  padding: 11px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-top: 1px solid var(--border2);
-  background: var(--bg3);
-}
-.tbl-info {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--text3);
-}
-
-/* Pagination */
-.pagination {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.pg-btn {
-  padding: 5px 10px;
-  background: var(--bg4);
-  border: 1px solid var(--border2);
-  border-radius: 2px;
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--text3);
-  transition: all 0.15s;
-}
-.pg-btn:hover:not(:disabled) { color: var(--gold); border-color: var(--border); }
-.pg-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-.pg-btn.cur { background: var(--gold3); color: var(--gold); border-color: var(--border); }
-.pg-info { font-family: var(--mono); font-size: 11px; color: var(--text3); padding: 0 8px; }
-
-/* empty/loading states */
-.tbl-state {
-  text-align: center;
-  padding: 60px 20px;
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--text3);
-}
-
-.spin {
-  display: inline-block;
-  width: 16px; height: 16px;
-  border: 2px solid var(--border2);
-  border-top-color: var(--gold);
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-  vertical-align: middle;
-  margin-right: 8px;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* ═══════════════════════════════════════════════
-   STUDENT PROFILE MODAL
-═══════════════════════════════════════════════ */
-.overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(6,9,18,0.88);
-  backdrop-filter: blur(8px);
-  z-index: 400;
-  display: none;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 40px 16px;
-  overflow-y: auto;
-}
-.overlay.open { display: flex; }
-
-.modal {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  width: 780px;
-  max-width: 100%;
-  position: relative;
-  box-shadow: var(--shadow);
-  animation: modalIn 0.2s ease;
-  margin: auto;
-}
-@keyframes modalIn {
-  from { opacity: 0; transform: scale(0.97) translateY(8px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
-}
-
-.modal::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--gold), var(--gold2), var(--gold), transparent);
-}
-
-.modal-hdr {
-  padding: 28px 32px 20px;
-  border-bottom: 1px solid var(--border2);
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.modal-close {
-  background: none;
-  border: 1px solid var(--border2);
-  border-radius: 2px;
-  color: var(--text3);
-  font-size: 18px;
-  padding: 4px 10px;
-  line-height: 1;
-  transition: all 0.15s;
-  flex-shrink: 0;
-}
-.modal-close:hover { color: var(--red); border-color: rgba(248,113,113,0.4); }
-
-.profile-hero {
-  display: flex;
-  align-items: flex-start;
-  gap: 24px;
-}
-
-.profile-rank-badge {
-  font-family: var(--num);
-  font-size: 72px;
-  line-height: 1;
-  width: 100px;
-  height: 100px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--gold3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  flex-shrink: 0;
-  letter-spacing: 2px;
-}
-.profile-rank-badge.r1 { color: var(--gold); }
-.profile-rank-badge.r2 { color: #b0b8c8; background: rgba(176,184,200,0.08); border-color: rgba(176,184,200,0.2); }
-.profile-rank-badge.r3 { color: #cd7f32; background: rgba(205,127,50,0.08); border-color: rgba(205,127,50,0.2); }
-.profile-rank-badge.rn { color: var(--text3); background: var(--bg3); border-color: var(--border2); font-size: 48px; }
-
-.profile-info { flex: 1; }
-.profile-name {
-  font-family: var(--display);
-  font-size: 30px;
-  font-weight: 700;
-  color: var(--text);
-  line-height: 1.1;
-  margin-bottom: 4px;
-}
-.profile-school {
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--blue2);
-  margin-bottom: 10px;
-}
-.profile-id {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--text3);
-}
-
-/* profile stats grid */
-.profile-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  padding: 20px 32px;
-  border-bottom: 1px solid var(--border2);
-}
-
-.ps {
-  background: var(--bg3);
-  border: 1px solid var(--border2);
-  border-radius: var(--radius);
-  padding: 14px 12px;
-  text-align: center;
-}
-.ps-val {
-  font-family: var(--num);
-  font-size: 30px;
-  line-height: 1;
-  margin-bottom: 4px;
-  letter-spacing: 1px;
-}
-.ps-val.gold  { color: var(--gold); }
-.ps-val.green { color: var(--green); }
-.ps-val.red   { color: var(--red); }
-.ps-val.blue  { color: var(--blue2); }
-.ps-val.dim   { color: var(--text3); font-size: 22px; }
-.ps-label {
-  font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--text3);
-}
-
-/* accuracy bar */
-.acc-section {
-  padding: 16px 32px;
-  border-bottom: 1px solid var(--border2);
-}
-.acc-label {
-  display: flex;
-  justify-content: space-between;
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--text3);
-  margin-bottom: 8px;
-}
-.acc-track {
-  height: 6px;
-  background: var(--bg4);
-  border-radius: 3px;
-  overflow: hidden;
-}
-.acc-fill {
-  height: 100%;
-  border-radius: 3px;
-  background: linear-gradient(90deg, var(--green), #6ee7b7);
-  transition: width 0.6s ease;
-}
-
-/* division breakdown */
-.div-breakdown {
-  padding: 20px 32px;
-  border-bottom: 1px solid var(--border2);
-}
-.sec-title {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--text3);
-  margin-bottom: 14px;
-}
-
-.div-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.03);
-}
-.div-row:last-child { border-bottom: none; }
-.div-row-name {
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--gold);
-  width: 140px;
-  flex-shrink: 0;
-}
-.div-row-rank {
-  font-family: var(--num);
-  font-size: 22px;
-  color: var(--text2);
-  width: 50px;
-  flex-shrink: 0;
-  letter-spacing: 1px;
-}
-.div-row-score {
-  font-family: var(--num);
-  font-size: 22px;
-  color: var(--gold2);
-  width: 60px;
-  flex-shrink: 0;
-  letter-spacing: 1px;
-}
-.div-row-meta {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--text3);
-  flex: 1;
-}
-.div-row-acc {
-  width: 80px;
-  flex-shrink: 0;
-}
-.div-row-acc-label {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--green);
-  margin-bottom: 4px;
-  text-align: right;
-}
-
-/* mini chart */
-.profile-chart {
-  padding: 20px 32px;
-}
-.chart-mini { height: 140px; }
-
-.modal-footer {
-  padding: 16px 32px;
-  border-top: 1px solid var(--border2);
-  display: flex;
-  gap: 10px;
-  background: var(--bg3);
-}
-
-.btn-outline {
-  padding: 11px 20px;
-  background: none;
-  border: 1px solid var(--border2);
-  border-radius: var(--radius);
-  color: var(--text2);
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  transition: all 0.15s;
-}
-.btn-outline:hover { color: var(--gold); border-color: var(--border); }
-
-.btn-primary {
-  padding: 11px 24px;
-  background: var(--gold);
-  border: none;
-  border-radius: var(--radius);
-  color: var(--bg);
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  transition: background 0.15s;
-}
-.btn-primary:hover { background: var(--gold2); }
-
-.btn-danger {
-  padding: 11px 20px;
-  background: none;
-  border: 1px solid rgba(248,113,113,0.3);
-  border-radius: var(--radius);
-  color: var(--red);
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  transition: all 0.15s;
-}
-.btn-danger:hover { background: rgba(248,113,113,0.08); }
-
-/* ═══════════════════════════════════════════════
-   EDIT MODAL
-═══════════════════════════════════════════════ */
-.edit-modal {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  width: 560px;
-  max-width: 100%;
-  box-shadow: var(--shadow);
-  animation: modalIn 0.2s ease;
-  margin: auto;
-}
-.edit-modal::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--amber), transparent);
-}
-
-.eg {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  padding: 24px 32px;
-}
-.eg .field.full { grid-column: 1 / -1; }
-.eg .field { margin-bottom: 0; }
-
-/* ═══════════════════════════════════════════════
-   ANALYTICS VIEW
-═══════════════════════════════════════════════ */
-.charts-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-top: 20px;
-}
-.chart-card {
-  background: var(--bg2);
-  border: 1px solid var(--border2);
-  border-radius: var(--radius);
-  padding: 22px;
-  transition: border-color 0.2s;
-}
-.chart-card:hover { border-color: var(--border); }
-.chart-card.wide { grid-column: 1 / -1; }
-.chart-card-title {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--text3);
-  margin-bottom: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.chart-h { position: relative; height: 220px; }
-
-.top-table { width: 100%; }
-.top-table tr { border-bottom: 1px solid rgba(255,255,255,0.03); }
-.top-table tr:last-child { border-bottom: none; }
-.top-table td { padding: 8px 6px; font-size: 13px; }
-.top-pos { font-family: var(--num); font-size: 18px; color: var(--gold); width: 28px; }
-.top-name { font-family: var(--display); font-weight: 600; flex: 1; }
-.top-school { font-family: var(--mono); font-size: 10px; color: var(--text3); display: block; }
-.top-score { font-family: var(--num); font-size: 20px; color: var(--gold2); text-align: right; }
-
-/* ═══════════════════════════════════════════════
-   ADMIN VIEW
-═══════════════════════════════════════════════ */
-.admin-card {
-  background: var(--bg2);
-  border: 1px solid var(--border2);
-  border-radius: var(--radius);
-  padding: 24px 28px;
-  margin-bottom: 16px;
-}
-.admin-card-title {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--text3);
-  margin-bottom: 18px;
-}
-.admin-form-grid { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px; align-items: end; }
-.admin-notice {
-  margin-top: 14px;
-  padding: 11px 14px;
-  border-radius: var(--radius);
-  font-family: var(--mono);
-  font-size: 11px;
-  display: none;
-}
-.admin-notice.err { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.25); color: var(--red); }
-.admin-notice.ok  { background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.25); color: var(--green); }
-
-/* ═══════════════════════════════════════════════
-   TOAST
-═══════════════════════════════════════════════ */
-.toast {
-  position: fixed;
-  bottom: 28px;
-  right: 28px;
-  padding: 13px 20px;
-  background: var(--bg3);
-  border: 1px solid var(--border2);
-  border-radius: var(--radius);
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--text);
-  z-index: 9000;
-  transform: translateY(12px);
-  opacity: 0;
-  pointer-events: none;
-  transition: all 0.25s;
-  max-width: 320px;
-  box-shadow: var(--shadow);
-}
-.toast.show { transform: translateY(0); opacity: 1; }
-.toast.ok  { border-color: rgba(52,211,153,0.4); color: var(--green); }
-.toast.err { border-color: rgba(248,113,113,0.4); color: var(--red); }
-
-/* ═══════════════════════════════════════════════
-   RESPONSIVE
-═══════════════════════════════════════════════ */
-@media (max-width: 900px) {
-  .topbar { padding: 0 14px; }
-  .topbar-center { display: none; }
-  .view { padding: 20px 14px; }
-  .charts-grid { grid-template-columns: 1fr; }
-  .chart-card.wide { grid-column: 1; }
-  .profile-stats { grid-template-columns: repeat(2, 1fr); }
-  .eg { grid-template-columns: 1fr; }
-  .eg .field.full { grid-column: 1; }
-  .admin-form-grid { grid-template-columns: 1fr; }
+  --bg:#060912;--bg2:#0d1220;--bg3:#141c2e;--bg4:#1c2640;
+  --gold:#f0c040;--gold2:#fad56a;--gold3:rgba(240,192,64,0.12);
+  --blue:#4f8ef7;--blue2:#7aabff;--blue3:rgba(79,142,247,0.12);
+  --green:#34d399;--green3:rgba(52,211,153,0.12);
+  --red:#f87171;--red3:rgba(248,113,113,0.12);
+  --amber:#fb923c;--purple:#a78bfa;--purple3:rgba(167,139,250,0.12);
+  --text:#e8eaf2;--text2:#9aa3bc;--text3:#5a6480;
+  --border:rgba(240,192,64,0.18);--border2:rgba(255,255,255,0.06);
+  --shadow:0 24px 80px rgba(0,0,0,0.7);--radius:3px;
+  --mono:'JetBrains Mono',monospace;--serif:'Crimson Pro',serif;--num:'Bebas Neue',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--serif);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;font-size:16px}
+button{cursor:pointer;font-family:inherit}input,select{font-family:inherit}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:.4}
+
+/* AUTH */
+#auth-page{display:none;min-height:100vh;align-items:center;justify-content:center;position:relative;overflow:hidden}
+#auth-page.visible{display:flex}
+.auth-bg{position:absolute;inset:0;background:radial-gradient(ellipse 60% 60% at 15% 50%,rgba(240,192,64,.07) 0%,transparent 70%),radial-gradient(ellipse 50% 80% at 85% 20%,rgba(79,142,247,.05) 0%,transparent 60%),linear-gradient(160deg,#060912 0%,#0a1020 50%,#060912 100%)}
+.auth-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(240,192,64,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(240,192,64,.03) 1px,transparent 1px);background-size:48px 48px}
+.auth-deco{position:absolute;font-family:var(--num);font-size:40vw;color:rgba(240,192,64,.012);line-height:1;top:50%;left:50%;transform:translate(-50%,-50%);user-select:none;pointer-events:none}
+.auth-card{position:relative;width:460px;max-width:95vw;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow),0 0 100px rgba(240,192,64,.06);overflow:hidden}
+.auth-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),var(--gold2),var(--gold),transparent)}
+.auth-hdr{padding:40px 44px 28px;border-bottom:1px solid var(--border2)}
+.auth-wordmark{font-family:var(--num);font-size:42px;letter-spacing:8px;color:var(--gold);line-height:1;display:block}
+.auth-sub{font-family:var(--mono);font-size:10px;letter-spacing:3px;color:var(--text3);text-transform:uppercase;margin-top:6px}
+.auth-tabs{display:flex;margin-top:20px;background:var(--bg3);border-radius:2px;padding:3px}
+.auth-tab{flex:1;padding:9px;background:none;border:none;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);border-radius:1px;transition:all .2s}
+.auth-tab.active{background:var(--gold3);color:var(--gold)}
+.auth-body{padding:28px 44px 36px}
+.field{margin-bottom:16px}
+.field label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:7px}
+.field input,.field select{width:100%;padding:12px 15px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);font-family:var(--mono);font-size:13px;outline:none;transition:border-color .2s,box-shadow .2s}
+.field input:focus,.field select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(240,192,64,.08)}
+.btn-gold{width:100%;padding:14px;background:var(--gold);border:none;border-radius:var(--radius);color:var(--bg);font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;transition:background .15s,box-shadow .15s;margin-top:6px}
+.btn-gold:hover{background:var(--gold2);box-shadow:0 4px 20px rgba(240,192,64,.3)}
+.btn-gold:disabled{opacity:.45;cursor:not-allowed}
+.auth-notice{margin-top:14px;padding:11px 14px;border-radius:var(--radius);font-family:var(--mono);font-size:12px;text-align:center;display:none;line-height:1.5}
+.auth-notice.err{background:var(--red3);border:1px solid rgba(248,113,113,.3);color:var(--red)}
+.auth-notice.ok{background:var(--green3);border:1px solid rgba(52,211,153,.3);color:var(--green)}
+
+/* APP SHELL */
+#app{display:none;min-height:100vh}
+.topbar{position:fixed;top:0;left:0;right:0;height:56px;background:rgba(6,9,18,.96);border-bottom:1px solid var(--border2);backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:space-between;padding:0 24px;z-index:200}
+.topbar-logo{font-family:var(--num);font-size:24px;letter-spacing:5px;color:var(--gold);display:flex;align-items:center;gap:8px}
+.logo-dot{width:6px;height:6px;background:var(--gold);border-radius:50%}
+.topbar-center{display:flex;align-items:center;gap:2px}
+.div-tab{padding:7px 15px;background:none;border:none;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text3);border-radius:2px;transition:all .15s;white-space:nowrap}
+.div-tab:hover{color:var(--text2);background:var(--bg3)}
+.div-tab.active{color:var(--gold);background:var(--gold3)}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.nav-pill{padding:7px 13px;background:none;border:1px solid var(--border2);border-radius:2px;font-family:var(--mono);font-size:11px;color:var(--text3);transition:all .15s;white-space:nowrap}
+.nav-pill:hover{color:var(--text);border-color:var(--text3)}
+.nav-pill.active{color:var(--gold);border-color:var(--border);background:var(--gold3)}
+.user-chip{font-family:var(--mono);font-size:11px;color:var(--text3);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:none}
+.btn-signout{padding:6px 12px;background:none;border:1px solid rgba(248,113,113,.2);border-radius:2px;font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);transition:all .15s}
+.btn-signout:hover{color:var(--red);border-color:rgba(248,113,113,.5)}
+.main{padding-top:56px;min-height:100vh}
+.view{display:none;padding:28px 24px;max-width:1600px;margin:0 auto;animation:fadeUp .2s ease}
+.view.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* LOADER */
+.load-overlay{position:fixed;inset:0;background:rgba(6,9,18,.93);backdrop-filter:blur(6px);z-index:500;flex-direction:column;align-items:center;justify-content:center;gap:20px;display:none}
+.load-overlay.show{display:flex}
+.load-wordmark{font-family:var(--num);font-size:48px;letter-spacing:8px;color:var(--gold)}
+.load-bar-track{width:280px;height:2px;background:var(--bg4);border-radius:1px;overflow:hidden}
+.load-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:1px;width:0%;transition:width .3s ease}
+.load-status{font-family:var(--mono);font-size:12px;color:var(--text3);letter-spacing:1px;min-width:280px;text-align:center}
+
+/* PAGE HEADER */
+.page-hdr{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:16px}
+.page-hdr h1{font-family:var(--num);font-size:44px;letter-spacing:3px;color:var(--text);line-height:1}
+.page-hdr h1 em{font-style:normal;color:var(--gold)}
+.page-hdr p{font-family:var(--mono);font-size:11px;color:var(--text3);letter-spacing:1px;margin-top:6px}
+
+/* STAT CARDS */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px;margin-bottom:20px}
+.sc{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:16px 18px;position:relative;overflow:hidden;transition:border-color .2s,transform .15s}
+.sc:hover{border-color:var(--border);transform:translateY(-1px)}
+.sc::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1.5px;background:linear-gradient(90deg,var(--gold),transparent);opacity:.5}
+.sc-label{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
+.sc-val{font-family:var(--num);font-size:34px;color:var(--gold);line-height:1;letter-spacing:1px}
+.sc-val.sm{font-size:20px}
+.sc-val.inv{color:#c4b5fd}.sc-val.reg{color:var(--blue2)}
+.sc-sub{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px}
+
+/* TOOLBAR */
+.toolbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.search-box{position:relative;flex:1;min-width:200px}
+.search-box input{width:100%;padding:10px 14px 10px 36px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);font-family:var(--mono);font-size:12px;outline:none;transition:border-color .2s}
+.search-box input:focus{border-color:var(--gold)}
+.search-box input::placeholder{color:var(--text3)}
+.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--text3);pointer-events:none}
+.sel{padding:10px 12px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text2);font-family:var(--mono);font-size:11px;outline:none;cursor:pointer;transition:border-color .2s}
+.sel:focus{border-color:var(--gold)}
+.sel option{background:var(--bg2)}
+.btn-sm{padding:10px 14px;background:none;border:1px solid var(--border2);border-radius:var(--radius);color:var(--text3);font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;transition:all .15s;white-space:nowrap}
+.btn-sm:hover{color:var(--gold);border-color:var(--border)}
+.btn-sm.active{color:var(--gold);background:var(--gold3);border-color:var(--border)}
+
+/* TYPE BADGES */
+.type-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:2px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;line-height:1.2}
+.type-inv{background:var(--purple3);color:#c4b5fd;border:1px solid rgba(167,139,250,.3)}
+.type-reg{background:var(--blue3);color:var(--blue2);border:1px solid rgba(79,142,247,.2)}
+.type-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.type-inv .type-dot{background:#c4b5fd}
+.type-reg .type-dot{background:var(--blue2)}
+
+/* TABLE */
+.tbl-wrap{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);overflow:hidden}
+.tbl-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:900px}
+thead th{padding:11px 14px;text-align:left;font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);background:linear-gradient(180deg,var(--bg3),var(--bg2));border-bottom:1px solid var(--border2);white-space:nowrap;cursor:pointer;user-select:none;transition:color .15s}
+thead th:hover{color:var(--gold)}
+tbody tr{border-bottom:1px solid rgba(255,255,255,.03);cursor:pointer;transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:rgba(240,192,64,.04)}
+tbody td{padding:10px 14px;font-size:14px}
+.rank-num{font-family:var(--num);font-size:20px;letter-spacing:1px;line-height:1}
+.r1{color:var(--gold)}.r2{color:#b0b8c8}.r3{color:#cd7f32}.rn{color:var(--text3)}
+.td-name{font-family:var(--serif);font-weight:600;font-size:15px}
+.td-school{font-family:var(--mono);font-size:11px;color:var(--blue2)}
+.td-score{font-family:var(--num);font-size:22px;color:var(--gold2);letter-spacing:1px}
+.td-mono{font-family:var(--mono);font-size:12px;color:var(--text2)}
+.td-green{color:var(--green)}.td-red{color:var(--red)}.td-dim{color:var(--text3)}
+.td-acc{display:flex;align-items:center;gap:7px}
+.mini-bar{width:44px;height:3px;background:var(--bg4);border-radius:2px;overflow:hidden;flex-shrink:0}
+.mini-bar-fill{height:100%;background:var(--green);border-radius:2px}
+.tbl-footer{padding:10px 14px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border2);background:var(--bg3)}
+.tbl-info{font-family:var(--mono);font-size:11px;color:var(--text3)}
+.pagination{display:flex;align-items:center;gap:3px}
+.pg-btn{padding:5px 9px;background:var(--bg4);border:1px solid var(--border2);border-radius:2px;font-family:var(--mono);font-size:11px;color:var(--text3);transition:all .15s}
+.pg-btn:hover:not(:disabled){color:var(--gold);border-color:var(--border)}
+.pg-btn:disabled{opacity:.3;cursor:not-allowed}
+.pg-btn.cur{background:var(--gold3);color:var(--gold);border-color:var(--border)}
+.pg-info{font-family:var(--mono);font-size:11px;color:var(--text3);padding:0 6px}
+.tbl-state{text-align:center;padding:60px 20px;font-family:var(--mono);font-size:12px;color:var(--text3)}
+.spin{display:inline-block;width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--gold);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* PROFILE PANEL */
+.profile-overlay{position:fixed;inset:0;z-index:400;display:none;background:rgba(6,9,18,.6);backdrop-filter:blur(4px)}
+.profile-overlay.open{display:block}
+.profile-panel{position:fixed;top:0;right:0;bottom:0;width:780px;max-width:100vw;background:var(--bg2);border-left:1px solid var(--border);overflow-y:auto;z-index:401;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);box-shadow:-20px 0 80px rgba(0,0,0,.6)}
+.profile-panel.open{transform:translateX(0)}
+.profile-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),var(--gold2),var(--gold),transparent);z-index:1}
+.pp-close{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:rgba(13,18,32,.97);border-bottom:1px solid var(--border2);backdrop-filter:blur(8px)}
+.pp-close-title{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3)}
+.pp-close-btns{display:flex;gap:8px}
+.pp-btn{padding:7px 14px;background:none;border:1px solid var(--border2);border-radius:2px;font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);transition:all .15s}
+.pp-btn:hover{color:var(--gold);border-color:var(--border)}
+.pp-btn.primary{background:var(--gold);border-color:var(--gold);color:var(--bg);font-weight:700}
+.pp-btn.primary:hover{background:var(--gold2)}
+.pp-btn.danger{border-color:rgba(248,113,113,.3);color:var(--red)}
+.pp-btn.danger:hover{background:var(--red3)}
+.pp-hero{padding:28px 28px 0;display:flex;gap:20px;align-items:flex-start}
+.pp-rank-badge{font-family:var(--num);display:flex;align-items:center;justify-content:center;width:88px;height:88px;border-radius:var(--radius);flex-shrink:0;font-size:52px;letter-spacing:2px;line-height:1}
+.ppb-1{background:var(--gold3);border:1px solid var(--border);color:var(--gold)}
+.ppb-2{background:rgba(176,184,200,.08);border:1px solid rgba(176,184,200,.2);color:#b0b8c8}
+.ppb-3{background:rgba(205,127,50,.08);border:1px solid rgba(205,127,50,.2);color:#cd7f32}
+.ppb-n{background:var(--bg3);border:1px solid var(--border2);color:var(--text3);font-size:36px}
+.pp-hero-info{flex:1;min-width:0}
+.pp-name{font-family:var(--serif);font-size:28px;font-weight:700;line-height:1.1;margin-bottom:5px}
+.pp-school{font-family:var(--mono);font-size:12px;color:var(--blue2);margin-bottom:5px}
+.pp-meta{font-family:var(--mono);font-size:11px;color:var(--text3);display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+.pp-meta .tag{color:var(--text3)}.pp-meta .val{color:var(--text2)}
+.pp-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.pp-tag{padding:3px 10px;border-radius:999px;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase}
+.pp-tag.gold{background:var(--gold3);color:var(--gold);border:1px solid rgba(240,192,64,.25)}
+.pp-tag.blue{background:var(--blue3);color:var(--blue2);border:1px solid rgba(79,142,247,.2)}
+.pp-tag.green{background:var(--green3);color:var(--green);border:1px solid rgba(52,211,153,.2)}
+.pp-tag.purple{background:var(--purple3);color:#c4b5fd;border:1px solid rgba(167,139,250,.2)}
+.pp-section{padding:22px 28px;border-bottom:1px solid var(--border2)}
+.pp-section:last-child{border-bottom:none}
+.pp-sec-title{font-family:var(--mono);font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--text3);margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.pp-sec-title::after{content:'';flex:1;height:1px;background:var(--border2)}
+.pp-sec-subtitle{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:1px;margin-left:4px;font-weight:normal}
+
+/* Profile metrics grid */
+.pp-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.pp-metric{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:14px 12px;text-align:center;position:relative;overflow:hidden;transition:border-color .2s}
+.pp-metric:hover{border-color:var(--border)}
+.pp-metric.highlight::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.pp-metric.gold::before{background:linear-gradient(90deg,var(--gold),var(--gold2))}
+.pp-metric.green::before{background:linear-gradient(90deg,var(--green),#6ee7b7)}
+.pp-metric.blue::before{background:linear-gradient(90deg,var(--blue),var(--blue2))}
+.pp-metric.purple::before{background:linear-gradient(90deg,var(--purple),#c4b5fd)}
+.pp-metric-val{font-family:var(--num);font-size:28px;line-height:1;margin-bottom:4px;letter-spacing:1px}
+.pp-metric-val.gold{color:var(--gold)}.pp-metric-val.green{color:var(--green)}.pp-metric-val.blue{color:var(--blue2)}.pp-metric-val.red{color:var(--red)}.pp-metric-val.purple{color:#c4b5fd}.pp-metric-val.dim{color:var(--text3);font-size:20px}
+.pp-metric-label{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3)}
+.pp-metric-sub{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:3px}
+
+/* Accuracy */
+.acc-full{display:flex;gap:20px;align-items:stretch}
+.acc-donut-wrap{flex-shrink:0;width:120px;height:120px;position:relative}
+.acc-donut-wrap canvas{position:absolute;inset:0}
+.acc-donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.acc-donut-pct{font-family:var(--num);font-size:26px;color:var(--green);line-height:1}
+.acc-donut-sub{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:1px}
+.acc-bars{flex:1}
+.acc-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.acc-bar-row:last-child{margin-bottom:0}
+.acc-bar-label{font-family:var(--mono);font-size:11px;width:50px;flex-shrink:0}
+.acc-bar-track{flex:1;height:8px;background:var(--bg4);border-radius:4px;overflow:hidden}
+.acc-bar-fill{height:100%;border-radius:4px;transition:width .6s ease}
+.acc-bar-fill.green{background:linear-gradient(90deg,var(--green),#6ee7b7)}
+.acc-bar-fill.red{background:linear-gradient(90deg,var(--red),#fca5a5)}
+.acc-bar-fill.dim{background:linear-gradient(90deg,var(--text3),var(--bg4))}
+.acc-bar-val{font-family:var(--num);font-size:18px;width:42px;text-align:right;flex-shrink:0}
+.acc-bar-pct{font-family:var(--mono);font-size:11px;color:var(--text3);width:36px;text-align:right;flex-shrink:0}
+
+/* Percentile */
+.percentile-row{display:flex;gap:14px;align-items:stretch;flex-wrap:wrap}
+.pct-card{flex:1;min-width:160px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:16px}
+.pct-title{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:10px}
+.pct-gauge-track{height:10px;background:var(--bg4);border-radius:5px;overflow:hidden;margin-bottom:8px}
+.pct-gauge-fill{height:100%;border-radius:5px;transition:width .8s ease}
+.pct-gauge-fill.elite{background:linear-gradient(90deg,var(--gold),var(--gold2))}
+.pct-gauge-fill.good{background:linear-gradient(90deg,var(--green),#6ee7b7)}
+.pct-gauge-fill.avg{background:linear-gradient(90deg,var(--blue),var(--blue2))}
+.pct-gauge-fill.low{background:linear-gradient(90deg,var(--amber),#fcd34d)}
+.pct-nums{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--text3)}
+.pct-big{font-family:var(--num);font-size:32px;color:var(--blue2);line-height:1;margin-bottom:2px}
+.pct-big.elite{color:var(--gold)}.pct-big.good{color:var(--green)}.pct-big.low{color:var(--amber)}
+
+/* Context grid */
+.context-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ctx-card{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:14px 16px;transition:border-color .2s}
+.ctx-label{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
+.ctx-val{font-family:var(--num);font-size:26px;letter-spacing:1px;color:var(--text);line-height:1}
+.ctx-sub{font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:4px}
+
+/* Test type context card */
+.test-info-bar{margin-top:12px;padding:12px 16px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);font-family:var(--mono);font-size:11px;color:var(--text3);line-height:1.7}
+.test-info-bar.inv-bar{border-color:rgba(167,139,250,.25);background:rgba(167,139,250,.05)}
+.test-info-bar.reg-bar{border-color:rgba(79,142,247,.2);background:rgba(79,142,247,.04)}
+
+/* Difficulty comparison */
+.diff-compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.diff-card{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:14px 16px;position:relative;overflow:hidden}
+.diff-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.diff-card.inv-card{border-color:rgba(167,139,250,.25)}
+.diff-card.inv-card::before{background:linear-gradient(90deg,var(--purple),#c4b5fd)}
+.diff-card.reg-card{border-color:rgba(79,142,247,.2)}
+.diff-card.reg-card::before{background:linear-gradient(90deg,var(--blue),var(--blue2))}
+.diff-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.diff-card-type{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase}
+.diff-card-type.inv{color:#c4b5fd}.diff-card-type.reg{color:var(--blue2)}
+.diff-card-count{font-family:var(--mono);font-size:10px;color:var(--text3)}
+.diff-card-avg{font-family:var(--num);font-size:28px;line-height:1;letter-spacing:1px}
+.diff-card-avg.inv{color:#c4b5fd}.diff-card-avg.reg{color:var(--blue2)}
+.diff-card-sub{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px}
+.diff-you-marker{display:flex;align-items:center;gap:6px;margin-top:8px;font-family:var(--mono);font-size:11px}
+.diff-you-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);flex-shrink:0}
+
+/* Cross-div table */
+.div-table{width:100%;border-collapse:collapse}
+.div-table th{padding:8px 10px;text-align:left;font-family:var(--mono);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border2);background:var(--bg3)}
+.div-table td{padding:11px 10px;border-bottom:1px solid rgba(255,255,255,.03)}
+.div-table tr:last-child td{border-bottom:none}
+.div-table tr:hover td{background:rgba(240,192,64,.03)}
+.div-name-cell{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--gold)}
+.div-name-cell.current{color:var(--gold2)}
+.div-rank-cell{font-family:var(--num);font-size:22px;letter-spacing:1px}
+.div-score-cell{font-family:var(--num);font-size:22px;color:var(--gold2);letter-spacing:1px}
+.div-pct-cell{font-family:var(--num);font-size:18px;color:var(--blue2)}
+.div-acc-cell{display:flex;align-items:center;gap:6px}
+.div-mini-bar{width:48px;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.div-mini-bar-fill{height:100%;border-radius:2px}
+.div-vs{font-family:var(--mono);font-size:10px}
+.div-vs.above{color:var(--green)}.div-vs.below{color:var(--red)}.div-vs.at{color:var(--text3)}
+.consistency-row{display:flex;gap:10px;flex-wrap:wrap}
+.cons-box{flex:1;min-width:90px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:14px;text-align:center}
+.cons-val{font-family:var(--num);font-size:28px;letter-spacing:1px;line-height:1;margin-bottom:4px}
+.cons-label{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3)}
+
+/* Chart */
+.pp-chart-wrap{height:180px;position:relative}
+
+/* EDIT MODAL */
+.overlay{position:fixed;inset:0;background:rgba(6,9,18,.88);backdrop-filter:blur(8px);z-index:600;display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
+.overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);width:580px;max-width:100%;position:relative;box-shadow:var(--shadow);animation:modalIn .2s ease;margin:auto}
+.modal::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--amber),transparent)}
+@keyframes modalIn{from{opacity:0;transform:scale(.97) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-hdr{padding:24px 28px 18px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-family:var(--num);font-size:24px;letter-spacing:2px}
+.modal-close{background:none;border:1px solid var(--border2);border-radius:2px;color:var(--text3);font-size:17px;padding:4px 9px;line-height:1;transition:all .15s}
+.modal-close:hover{color:var(--red);border-color:rgba(248,113,113,.4)}
+.eg{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:20px 28px}
+.eg .field{margin-bottom:0}
+.eg .field.full{grid-column:1/-1}
+.modal-footer{padding:14px 28px;border-top:1px solid var(--border2);display:flex;gap:8px;background:var(--bg3)}
+.btn-outline{padding:11px 18px;background:none;border:1px solid var(--border2);border-radius:var(--radius);color:var(--text2);font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;transition:all .15s}
+.btn-outline:hover{color:var(--gold);border-color:var(--border)}
+.btn-primary{padding:11px 22px;background:var(--gold);border:none;border-radius:var(--radius);color:var(--bg);font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;transition:background .15s}
+.btn-primary:hover{background:var(--gold2)}
+.btn-danger{padding:11px 18px;background:none;border:1px solid rgba(248,113,113,.3);border-radius:var(--radius);color:var(--red);font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;transition:all .15s}
+.btn-danger:hover{background:var(--red3)}
+
+/* ANALYTICS */
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+.chart-card{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:20px;transition:border-color .2s}
+.chart-card:hover{border-color:var(--border)}
+.chart-card.wide{grid-column:1/-1}
+.chart-title{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:16px}
+.chart-h{position:relative;height:220px}
+.top-table{width:100%}
+.top-table tr{border-bottom:1px solid rgba(255,255,255,.03)}
+.top-table tr:last-child{border-bottom:none}
+.top-table td{padding:7px 6px;font-size:13px}
+.top-pos{font-family:var(--num);font-size:18px;color:var(--gold);width:26px}
+.top-name{font-family:var(--serif);font-weight:600;flex:1}
+.top-school{font-family:var(--mono);font-size:10px;color:var(--text3);display:block}
+.top-score{font-family:var(--num);font-size:20px;color:var(--gold2);text-align:right}
+
+/* ADMIN */
+.admin-card{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:22px 26px;margin-bottom:14px}
+.admin-card-title{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:16px}
+.admin-grid{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end}
+.admin-notice{margin-top:12px;padding:11px 14px;border-radius:var(--radius);font-family:var(--mono);font-size:11px;display:none}
+.admin-notice.err{background:var(--red3);border:1px solid rgba(248,113,113,.25);color:var(--red)}
+.admin-notice.ok{background:var(--green3);border:1px solid rgba(52,211,153,.25);color:var(--green)}
+
+/* TOAST */
+.toast{position:fixed;bottom:26px;right:26px;padding:12px 18px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);font-family:var(--mono);font-size:12px;color:var(--text);z-index:9000;transform:translateY(12px);opacity:0;pointer-events:none;transition:all .25s;max-width:300px;box-shadow:var(--shadow)}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{border-color:rgba(52,211,153,.4);color:var(--green)}
+.toast.err{border-color:rgba(248,113,113,.4);color:var(--red)}
+
+@media(max-width:900px){
+  .topbar{padding:0 12px}.topbar-center{display:none}
+  .view{padding:16px 12px}
+  .charts-grid{grid-template-columns:1fr}.chart-card.wide{grid-column:1}
+  .pp-metrics{grid-template-columns:repeat(2,1fr)}
+  .eg{grid-template-columns:1fr}.eg .field.full{grid-column:1}
+  .admin-grid{grid-template-columns:1fr}
+  .profile-panel{width:100vw}
+  .context-grid,.diff-compare{grid-template-columns:1fr}
+  .acc-full{flex-direction:column;align-items:center}
 }
 </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════
-     LOADING OVERLAY
-════════════════════════════════════ -->
 <div class="load-overlay" id="load-overlay">
   <div class="load-wordmark">FAMAT</div>
   <div class="load-bar-track"><div class="load-bar-fill" id="load-bar"></div></div>
   <div class="load-status" id="load-status">Initializing…</div>
 </div>
 
-<!-- ═══════════════════════════════════
-     AUTH PAGE
-════════════════════════════════════ -->
 <div id="auth-page">
-  <div class="auth-bg"></div>
-  <div class="auth-grid"></div>
+  <div class="auth-bg"></div><div class="auth-grid"></div>
   <div class="auth-deco">∑</div>
   <div class="auth-card">
-    <div class="auth-card-header">
+    <div class="auth-hdr">
       <span class="auth-wordmark">FAMAT</span>
       <div class="auth-sub">Competition Portal</div>
       <div class="auth-tabs">
-        <button class="auth-tab active" id="tab-in"  onclick="switchAuthTab('in')">Sign In</button>
-        <button class="auth-tab"        id="tab-up"  onclick="switchAuthTab('up')">Create Account</button>
+        <button class="auth-tab active" id="tab-in" onclick="switchTab('in')">Sign In</button>
+        <button class="auth-tab" id="tab-up" onclick="switchTab('up')">Create Account</button>
       </div>
     </div>
     <div class="auth-body">
-      <!-- sign in -->
       <div id="form-in">
         <div class="field"><label>Email</label><input type="email" id="in-email" placeholder="you@school.edu" onkeydown="if(event.key==='Enter')doSignIn()"/></div>
         <div class="field"><label>Password</label><input type="password" id="in-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doSignIn()"/></div>
         <button class="btn-gold" id="in-btn" onclick="doSignIn()">Sign In</button>
       </div>
-      <!-- sign up -->
       <div id="form-up" style="display:none">
         <div class="field"><label>Full Name</label><input type="text" id="up-name" placeholder="Your Name"/></div>
         <div class="field"><label>Email</label><input type="email" id="up-email" placeholder="you@school.edu"/></div>
         <div class="field"><label>Password</label><input type="password" id="up-pass" placeholder="Min 6 characters"/></div>
-        <div class="field"><label>Confirm Password</label><input type="password" id="up-conf" placeholder="••••••••" onkeydown="if(event.key==='Enter')doSignUp()"/></div>
+        <div class="field"><label>Confirm Password</label><input type="password" id="up-conf" onkeydown="if(event.key==='Enter')doSignUp()"/></div>
         <button class="btn-gold" id="up-btn" onclick="doSignUp()">Create Account</button>
       </div>
       <div class="auth-notice" id="auth-notice"></div>
@@ -1230,46 +394,45 @@ tbody td {
   </div>
 </div>
 
-<!-- ═══════════════════════════════════
-     APP
-════════════════════════════════════ -->
 <div id="app">
   <header class="topbar">
-    <div class="topbar-logo">
-      <span class="dot"></span>
-      FAMAT
-    </div>
-    <!-- Division tabs injected here -->
+    <div class="topbar-logo"><span class="logo-dot"></span>FAMAT</div>
     <div class="topbar-center" id="div-tabs"></div>
     <div class="topbar-right">
-      <button class="nav-pill active" id="nav-leaderboard" onclick="switchView('leaderboard',this)">Leaderboard</button>
-      <button class="nav-pill" id="nav-analytics"   onclick="switchView('analytics',this)">Analytics</button>
-      <button class="nav-pill" id="nav-admin"        onclick="switchView('admin',this)" style="display:none">Admin</button>
+      <button class="nav-pill active" onclick="switchView('leaderboard',this)">Leaderboard</button>
+      <button class="nav-pill" onclick="switchView('analytics',this)">Analytics</button>
+      <button class="nav-pill" id="nav-admin" onclick="switchView('admin',this)" style="display:none">Admin</button>
       <span class="user-chip" id="user-chip"></span>
       <button class="btn-signout" onclick="doSignOut()">Sign Out</button>
     </div>
   </header>
 
   <main class="main">
-
-    <!-- ── LEADERBOARD VIEW ── -->
+    <!-- LEADERBOARD -->
     <div class="view active" id="view-leaderboard">
       <div class="page-hdr">
-        <div class="page-hdr-left">
-          <h1 id="view-title">LEADERBOARD</h1>
-          <p id="view-sub">Loading…</p>
-        </div>
+        <div><h1 id="view-title">LEADERBOARD</h1><p id="view-sub">Loading…</p></div>
       </div>
-
       <div class="stats-row" id="div-stats"></div>
-
       <div class="toolbar">
         <div class="search-box">
           <span class="search-icon">⌕</span>
-          <input type="text" id="search" placeholder="Search name, school, or student ID…" oninput="applyFilters()"/>
+          <input type="text" id="search" placeholder="Search name, school, or ID…" oninput="applyFilters()"/>
         </div>
-        <select class="sel" id="school-sel" onchange="applyFilters()"><option value="">All Schools</option></select>
-        <select class="sel" id="sort-sel" onchange="applyFilters()">
+        <select class="sel" id="school-sel" onchange="applyFilters()" style="min-width:140px"><option value="">All Schools</option></select>
+        <select class="sel" id="year-sel" onchange="applyFilters()" style="min-width:110px"><option value="">All Years</option></select>
+        <select class="sel" id="month-sel" onchange="applyFilters()" style="min-width:115px">
+          <option value="">All Months</option>
+          <option value="Jan">January</option>
+          <option value="Feb">February</option>
+          <option value="Mar">March</option>
+        </select>
+        <select class="sel" id="type-sel" onchange="applyFilters()" style="min-width:130px">
+          <option value="">All Types</option>
+          <option value="Inv">Invitational ★</option>
+          <option value="Reg">Regional</option>
+        </select>
+        <select class="sel" id="sort-sel" onchange="applyFilters()" style="min-width:130px">
           <option value="rank-asc">Rank ↑</option>
           <option value="score-desc">Score ↓</option>
           <option value="score-asc">Score ↑</option>
@@ -1279,24 +442,22 @@ tbody td {
         </select>
         <button class="btn-sm" id="tog-cols" onclick="toggleExtraCols()">More Cols</button>
       </div>
-
       <div class="tbl-wrap">
         <div class="tbl-scroll">
           <table>
-            <thead>
-              <tr>
-                <th style="width:64px">Rank</th>
-                <th>Name</th>
-                <th>School</th>
-                <th style="width:90px">Score</th>
-                <th class="extra-col" style="width:70px">Right</th>
-                <th class="extra-col" style="width:70px">Wrong</th>
-                <th class="extra-col" style="width:70px">Blank</th>
-                <th style="width:90px">Accuracy</th>
-                <th style="width:90px">T-Score</th>
-                <th class="extra-col">Student ID</th>
-              </tr>
-            </thead>
+            <thead><tr>
+              <th style="width:60px">Rank</th>
+              <th>Name</th>
+              <th>School</th>
+              <th style="width:130px">Test</th>
+              <th style="width:85px">Score</th>
+              <th class="ec" style="width:65px">Right</th>
+              <th class="ec" style="width:65px">Wrong</th>
+              <th class="ec" style="width:65px">Blank</th>
+              <th style="width:100px">Accuracy</th>
+              <th style="width:85px">T-Score</th>
+              <th class="ec" style="width:100px">Student ID</th>
+            </tr></thead>
             <tbody id="tbody"></tbody>
           </table>
         </div>
@@ -1307,86 +468,53 @@ tbody td {
       </div>
     </div>
 
-    <!-- ── ANALYTICS VIEW ── -->
+    <!-- ANALYTICS -->
     <div class="view" id="view-analytics">
-      <div class="page-hdr">
-        <div class="page-hdr-left">
-          <h1><em>Analytics</em></h1>
-          <p id="analytics-sub">Competition statistics and performance breakdown</p>
-        </div>
-      </div>
-
+      <div class="page-hdr"><div><h1><em>Analytics</em></h1><p id="analytics-sub">Statistics and performance breakdown</p></div></div>
       <div class="stats-row" id="analytics-stats"></div>
-
       <div class="charts-grid">
-        <div class="chart-card wide">
-          <div class="chart-card-title">Score Distribution</div>
-          <div class="chart-h"><canvas id="c-dist"></canvas></div>
-        </div>
-        <div class="chart-card">
-          <div class="chart-card-title">Avg Score by School (Top 15)</div>
-          <div class="chart-h"><canvas id="c-schools"></canvas></div>
-        </div>
-        <div class="chart-card">
-          <div class="chart-card-title">Top 10 Students</div>
-          <table class="top-table" id="top10-tbl"></table>
-        </div>
+        <div class="chart-card wide"><div class="chart-title">Score Distribution</div><div class="chart-h"><canvas id="c-dist"></canvas></div></div>
+        <div class="chart-card"><div class="chart-title">Avg Score by School (Top 15)</div><div class="chart-h"><canvas id="c-schools"></canvas></div></div>
+        <div class="chart-card"><div class="chart-title">Top 10 Students</div><table class="top-table" id="top10-tbl"></table></div>
       </div>
     </div>
 
-    <!-- ── ADMIN VIEW ── -->
+    <!-- ADMIN -->
     <div class="view" id="view-admin">
-      <div class="page-hdr">
-        <div class="page-hdr-left">
-          <h1><em>Admin</em> Panel</h1>
-          <p>Manage accounts and portal access</p>
-        </div>
-      </div>
-
+      <div class="page-hdr"><div><h1><em>Admin</em> Panel</h1><p>Manage accounts and access</p></div></div>
       <div class="admin-card">
         <div class="admin-card-title">Create New User Account</div>
-        <div class="admin-form-grid">
+        <div class="admin-grid">
           <div class="field" style="margin:0"><label>Full Name</label><input type="text" id="a-name" placeholder="Full name"/></div>
           <div class="field" style="margin:0"><label>Email</label><input type="email" id="a-email" placeholder="user@school.edu"/></div>
           <div class="field" style="margin:0"><label>Password</label><input type="password" id="a-pass" placeholder="Min 6 chars"/></div>
-          <button class="btn-primary" style="padding:12px 20px;white-space:nowrap" onclick="adminCreate()">Create</button>
+          <button class="btn-primary" style="padding:12px 18px;white-space:nowrap" onclick="adminCreate()">Create</button>
         </div>
         <div class="admin-notice" id="a-notice"></div>
       </div>
     </div>
-
   </main>
 </div>
 
-<!-- ═══ PROFILE OVERLAY ═══ -->
-<div class="overlay" id="profile-overlay">
-  <div class="modal" id="profile-modal">
-    <div class="modal-hdr">
-      <div class="profile-hero" id="profile-hero"></div>
-      <button class="modal-close" onclick="closeOverlay('profile-overlay')">✕</button>
-    </div>
-    <div class="profile-stats" id="profile-stats"></div>
-    <div class="acc-section" id="profile-acc"></div>
-    <div class="div-breakdown" id="profile-divs"></div>
-    <div class="profile-chart" id="profile-chart" style="display:none">
-      <div class="sec-title">Score Across Divisions</div>
-      <div class="chart-mini"><canvas id="c-profile"></canvas></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-primary" onclick="openEditFromProfile()">Edit Record</button>
-      <button class="btn-danger"  onclick="deleteFromProfile()">Delete</button>
-      <button class="btn-outline" onclick="closeOverlay('profile-overlay')">Close</button>
+<!-- PROFILE PANEL -->
+<div class="profile-overlay" id="prof-overlay" onclick="closeProfPanel(event)"></div>
+<aside class="profile-panel" id="prof-panel">
+  <div class="pp-close">
+    <span class="pp-close-title">Student Profile</span>
+    <div class="pp-close-btns">
+      <button class="pp-btn primary" onclick="openEditFromProfile()">Edit</button>
+      <button class="pp-btn danger" onclick="deleteStudent()">Delete</button>
+      <button class="pp-btn" onclick="closeProfile()">✕ Close</button>
     </div>
   </div>
-</div>
+  <div class="pp-hero" id="pp-hero"></div>
+  <div id="pp-body"></div>
+</aside>
 
-<!-- ═══ EDIT OVERLAY ═══ -->
+<!-- EDIT MODAL -->
 <div class="overlay" id="edit-overlay">
-  <div class="edit-modal modal" style="position:relative">
-    <div class="modal-hdr">
-      <div style="font-family:var(--num);font-size:26px;letter-spacing:2px">EDIT RECORD</div>
-      <button class="modal-close" onclick="closeOverlay('edit-overlay')">✕</button>
-    </div>
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-title">EDIT RECORD</div><button class="modal-close" onclick="closeOverlay('edit-overlay')">✕</button></div>
     <div class="eg">
       <div class="field full"><label>Full Name</label><input type="text" id="e-name"/></div>
       <div class="field"><label>Rank</label><input type="number" id="e-rank"/></div>
@@ -1397,6 +525,22 @@ tbody td {
       <div class="field"><label>Wrong</label><input type="number" id="e-wrong"/></div>
       <div class="field"><label>Blank</label><input type="number" id="e-blank"/></div>
       <div class="field"><label>Student ID</label><input type="text" id="e-sid"/></div>
+      <div class="field"><label>Test Year</label><input type="number" id="e-year" placeholder="e.g. 2024"/></div>
+      <div class="field"><label>Test Month</label>
+        <select id="e-month">
+          <option value="">—</option>
+          <option value="Jan">January (Jan)</option>
+          <option value="Feb">February (Feb)</option>
+          <option value="Mar">March (Mar)</option>
+        </select>
+      </div>
+      <div class="field"><label>Test Type</label>
+        <select id="e-type">
+          <option value="">—</option>
+          <option value="Inv">Invitational (Inv) ★</option>
+          <option value="Reg">Regional (Reg)</option>
+        </select>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-primary" onclick="saveEdit()">Save Changes</button>
@@ -1407,800 +551,757 @@ tbody td {
 
 <div class="toast" id="toast"></div>
 
-<!-- ═══════════════════════════════════
-     JAVASCRIPT
-════════════════════════════════════ -->
 <script>
-/* ─────────────────────────────────────────
+/* ═══════════════════════════════════════
    ⚙️  CONFIGURATION — ADD DIVISIONS HERE
-   Add one object per Supabase table.
-   label = display name  |  table = exact Supabase table name
-────────────────────────────────────────── */
+═══════════════════════════════════════ */
 const DIVISIONS = [
-  { label: 'Algebra 1', table: 'Algebra 1' },
-  { label: 'Geometry',  table: 'Geometry'  },
-  // { label: 'Algebra 2', table: 'Algebra 2' },
-  // { label: 'Precalculus', table: 'Precalculus' },
-  // { label: 'Calculus', table: 'Calculus' },
-  // Add more divisions above this line
+  { label:'Algebra 1', table:'Algebra 1' },
+  { label:'Geometry',  table:'Geometry'  },
+  // { label:'Algebra 2',    table:'Algebra 2'    },
+  // { label:'Precalculus',  table:'Precalculus'  },
+  // { label:'Calculus',     table:'Calculus'     },
 ];
 
 const SUPABASE_URL  = 'https://uyiqisqkyrgzpydmnhgj.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5aXFpc3FreXJnenB5ZG1uaGdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMDU5OTksImV4cCI6MjA4NzY4MTk5OX0.oIfviVmBrrWcIXzmW8uZWjmJDtwD2rf8m108z5m5iqc';
-
-const ROWS_PER_PAGE = 100;
+const PER_PAGE = 100;
 
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
 
-/* ── STATE ── */
-let currentUser  = null;
-let currentDiv   = DIVISIONS[0];   // active division object
-let divData      = {};             // { tableName: [] } — cached data per division
-let filtered     = [];             // current filtered+sorted rows
-let curPage      = 1;
-let currentStudent = null;         // student obj currently in profile modal
-let extraCols    = false;
-let analyticsBuilt = false;
+let currentUser=null, currentDiv=DIVISIONS[0];
+let divData={}, filtered=[], curPage=1;
+let currentStudent=null, extraCols=false, analyticsBuilt=false;
 
-/* ═══════════════════════════════════════
-   INIT
-═══════════════════════════════════════ */
-window.addEventListener('DOMContentLoaded', async () => {
+/* ═══════════ BOOT ═══════════ */
+window.addEventListener('DOMContentLoaded', async ()=>{
   const { data } = await sb.auth.getSession();
-  if (data.session) {
-    currentUser = data.session.user;
-    initApp();
-  } else {
-    showAuth();
-  }
+  if(data.session){ currentUser=data.session.user; initApp(); } else showAuth();
 });
 
-/* ═══════════════════════════════════════
-   AUTH
-═══════════════════════════════════════ */
-function showAuth() {
-  document.getElementById('auth-page').classList.add('visible');
-  document.getElementById('app').style.display = 'none';
+/* ═══════════ AUTH ═══════════ */
+function showAuth(){ document.getElementById('auth-page').classList.add('visible'); document.getElementById('app').style.display='none'; }
+function switchTab(t){
+  document.getElementById('form-in').style.display=t==='in'?'block':'none';
+  document.getElementById('form-up').style.display=t==='up'?'block':'none';
+  document.getElementById('tab-in').classList.toggle('active',t==='in');
+  document.getElementById('tab-up').classList.toggle('active',t==='up');
+  authMsg('','');
 }
+function authMsg(m,type){ const el=document.getElementById('auth-notice'); el.textContent=m; el.className='auth-notice'+(type?' '+type:''); el.style.display=m?'block':'none'; }
 
-function switchAuthTab(tab) {
-  document.getElementById('form-in').style.display  = tab === 'in' ? 'block' : 'none';
-  document.getElementById('form-up').style.display  = tab === 'up' ? 'block' : 'none';
-  document.getElementById('tab-in').classList.toggle('active', tab === 'in');
-  document.getElementById('tab-up').classList.toggle('active', tab === 'up');
-  authNotice('', '');
+async function doSignIn(){
+  const email=document.getElementById('in-email').value.trim(), pass=document.getElementById('in-pass').value;
+  if(!email||!pass){ authMsg('Enter email and password.','err'); return; }
+  const btn=document.getElementById('in-btn'); btn.disabled=true; btn.textContent='Signing in…';
+  const { data, error }=await sb.auth.signInWithPassword({ email, password:pass });
+  btn.disabled=false; btn.textContent='Sign In';
+  if(error){ authMsg(error.message,'err'); return; }
+  currentUser=data.user; initApp();
 }
-
-function authNotice(msg, type) {
-  const el = document.getElementById('auth-notice');
-  el.textContent = msg;
-  el.className = 'auth-notice' + (type ? ' ' + type : '');
-  el.style.display = msg ? 'block' : 'none';
+async function doSignUp(){
+  const name=document.getElementById('up-name').value.trim(), email=document.getElementById('up-email').value.trim();
+  const pass=document.getElementById('up-pass').value, conf=document.getElementById('up-conf').value;
+  if(!name||!email||!pass){ authMsg('All fields required.','err'); return; }
+  if(pass!==conf){ authMsg('Passwords do not match.','err'); return; }
+  if(pass.length<6){ authMsg('Password must be at least 6 characters.','err'); return; }
+  const btn=document.getElementById('up-btn'); btn.disabled=true; btn.textContent='Creating…';
+  const { data, error }=await sb.auth.signUp({ email, password:pass, options:{ data:{ full_name:name } } });
+  btn.disabled=false; btn.textContent='Create Account';
+  if(error){ authMsg(error.message,'err'); return; }
+  if(data.session){ currentUser=data.user; initApp(); }
+  else { authMsg('Account created! Check your email to confirm.','ok'); switchTab('in'); }
 }
-
-async function doSignIn() {
-  const email = document.getElementById('in-email').value.trim();
-  const pass  = document.getElementById('in-pass').value;
-  if (!email || !pass) { authNotice('Enter email and password.', 'err'); return; }
-  const btn = document.getElementById('in-btn');
-  btn.disabled = true; btn.textContent = 'Signing in…';
-  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
-  btn.disabled = false; btn.textContent = 'Sign In';
-  if (error) { authNotice(error.message, 'err'); return; }
-  currentUser = data.user;
-  initApp();
-}
-
-async function doSignUp() {
-  const name = document.getElementById('up-name').value.trim();
-  const email = document.getElementById('up-email').value.trim();
-  const pass  = document.getElementById('up-pass').value;
-  const conf  = document.getElementById('up-conf').value;
-  if (!name || !email || !pass) { authNotice('All fields are required.', 'err'); return; }
-  if (pass !== conf) { authNotice('Passwords do not match.', 'err'); return; }
-  if (pass.length < 6) { authNotice('Password must be at least 6 characters.', 'err'); return; }
-  const btn = document.getElementById('up-btn');
-  btn.disabled = true; btn.textContent = 'Creating…';
-  const { data, error } = await sb.auth.signUp({ email, password: pass, options: { data: { full_name: name } } });
-  btn.disabled = false; btn.textContent = 'Create Account';
-  if (error) { authNotice(error.message, 'err'); return; }
-  if (data.session) { currentUser = data.user; initApp(); }
-  else { authNotice('Account created! Check your email to confirm.', 'ok'); switchAuthTab('in'); }
-}
-
-async function doSignOut() {
+async function doSignOut(){
   await sb.auth.signOut();
-  currentUser = null; divData = {}; analyticsBuilt = false;
-  showAuth();
+  currentUser=null; divData={}; analyticsBuilt=false;
+  document.getElementById('app').style.display='none';
+  document.getElementById('auth-page').classList.add('visible');
 }
 
-/* ═══════════════════════════════════════
-   APP INIT
-═══════════════════════════════════════ */
-function initApp() {
+/* ═══════════ INIT ═══════════ */
+function initApp(){
   document.getElementById('auth-page').classList.remove('visible');
-  document.getElementById('app').style.display = 'block';
-  document.getElementById('user-chip').textContent = currentUser.email;
-  document.getElementById('user-chip').style.display = '';
-  if ((currentUser.user_metadata || {}).is_admin) {
-    document.getElementById('nav-admin').style.display = '';
-  }
-  buildDivTabs();
-  loadDivision(DIVISIONS[0]);
+  document.getElementById('app').style.display='block';
+  document.getElementById('user-chip').textContent=currentUser.email;
+  document.getElementById('user-chip').style.display='';
+  if((currentUser.user_metadata||{}).is_admin) document.getElementById('nav-admin').style.display='';
+  buildDivTabs(); loadDivision(DIVISIONS[0]);
 }
-
-/* ═══════════════════════════════════════
-   DIVISION TABS
-═══════════════════════════════════════ */
-function buildDivTabs() {
-  const container = document.getElementById('div-tabs');
-  container.innerHTML = '';
-  DIVISIONS.forEach((div, i) => {
-    const btn = document.createElement('button');
-    btn.className = 'div-tab' + (i === 0 ? ' active' : '');
-    btn.textContent = div.label;
-    btn.onclick = () => {
-      document.querySelectorAll('.div-tab').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      loadDivision(div);
-    };
-    container.appendChild(btn);
+function buildDivTabs(){
+  const c=document.getElementById('div-tabs'); c.innerHTML='';
+  DIVISIONS.forEach((div,i)=>{
+    const btn=document.createElement('button');
+    btn.className='div-tab'+(i===0?' active':'');
+    btn.textContent=div.label;
+    btn.onclick=()=>{ document.querySelectorAll('.div-tab').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); loadDivision(div); };
+    c.appendChild(btn);
   });
 }
 
-/* ═══════════════════════════════════════
-   FETCH ALL ROWS (handles 6000+ students)
-   Supabase returns max 1000 per request —
-   we loop until all pages are fetched.
-═══════════════════════════════════════ */
-async function fetchAllRows(tableName, onProgress) {
-  const PAGE = 1000;
-  let all = [];
-  let from = 0;
-  while (true) {
-    if (onProgress) onProgress(all.length);
-    const { data, error } = await sb
-      .from(tableName)
-      .select('*')
-      .order('rank', { ascending: true })
-      .range(from, from + PAGE - 1);
-    if (error) { console.error('Fetch error:', error); break; }
-    if (!data || data.length === 0) break;
-    all = all.concat(data);
-    if (data.length < PAGE) break;   // last page
-    from += PAGE;
+/* ═══════════ FETCH ALL ROWS (handles 6000+) ═══════════ */
+async function fetchAll(tableName, onProgress){
+  const PAGE=1000; let all=[], from=0;
+  while(true){
+    if(onProgress) onProgress(all.length);
+    const { data, error }=await sb.from(tableName).select('*').order('rank',{ascending:true}).range(from, from+PAGE-1);
+    if(error||!data||!data.length) break;
+    all=all.concat(data);
+    if(data.length<PAGE) break;
+    from+=PAGE;
   }
   return all;
 }
 
-/* ═══════════════════════════════════════
-   LOAD A DIVISION
-═══════════════════════════════════════ */
-async function loadDivision(div) {
-  currentDiv = div;
-  analyticsBuilt = false;
-  curPage = 1;
-
-  // Update title
-  document.getElementById('view-title').textContent = div.label.toUpperCase();
-
-  // If already cached, just render
-  if (divData[div.table]) {
-    renderDivision();
-    return;
-  }
-
-  // Show loader
-  const loader = document.getElementById('load-overlay');
-  const bar    = document.getElementById('load-bar');
-  const status = document.getElementById('load-status');
-  loader.classList.add('show');
-  status.textContent = `Loading ${div.label}…`;
-  bar.style.width = '5%';
-
-  try {
-    const rows = await fetchAllRows(div.table, (loaded) => {
-      const pct = Math.min(90, 5 + (loaded / 100));
-      bar.style.width = pct + '%';
-      status.textContent = `Loading ${div.label}… ${loaded.toLocaleString()} students`;
-    });
-    bar.style.width = '100%';
-    divData[div.table] = rows;
-    setTimeout(() => loader.classList.remove('show'), 300);
-    renderDivision();
-  } catch (e) {
-    loader.classList.remove('show');
-    toast('Failed to load ' + div.label + ': ' + e.message, 'err');
-  }
+async function loadDivision(div){
+  currentDiv=div; analyticsBuilt=false; curPage=1;
+  document.getElementById('view-title').textContent=div.label.toUpperCase();
+  if(divData[div.table]){ renderDivision(); return; }
+  const lo=document.getElementById('load-overlay'), bar=document.getElementById('load-bar'), st=document.getElementById('load-status');
+  lo.classList.add('show'); bar.style.width='5%';
+  const rows=await fetchAll(div.table, n=>{ bar.style.width=Math.min(90,5+n/60)+'%'; st.textContent=`Loading ${div.label}… ${n.toLocaleString()} students`; });
+  bar.style.width='100%'; divData[div.table]=rows;
+  setTimeout(()=>lo.classList.remove('show'),300);
+  renderDivision();
 }
 
-/* ═══════════════════════════════════════
-   RENDER DIVISION (table + stats)
-═══════════════════════════════════════ */
-function renderDivision() {
-  const rows = divData[currentDiv.table] || [];
+/* ═══════════ RENDER DIVISION ═══════════ */
+function renderDivision(){
+  const rows=divData[currentDiv.table]||[];
+  const schools=[...new Set(rows.map(r=>r.school).filter(Boolean))].sort();
+  const sel=document.getElementById('school-sel'); const prev=sel.value;
+  sel.innerHTML='<option value="">All Schools</option>';
+  schools.forEach(s=>{ const o=document.createElement('option'); o.value=s; o.textContent=s; sel.appendChild(o); });
+  if(prev&&schools.includes(prev)) sel.value=prev;
 
-  // Populate school filter
-  const schools = [...new Set(rows.map(r => r.school).filter(Boolean))].sort();
-  const sel = document.getElementById('school-sel');
-  const prev = sel.value;
-  sel.innerHTML = '<option value="">All Schools</option>';
-  schools.forEach(s => {
-    const o = document.createElement('option');
-    o.value = s; o.textContent = s;
-    sel.appendChild(o);
-  });
-  if (prev && schools.includes(prev)) sel.value = prev;
+  // Year filter
+  const years=[...new Set(rows.map(r=>r.test_year).filter(Boolean))].sort((a,b)=>b-a);
+  const ySel=document.getElementById('year-sel'); const prevY=ySel.value;
+  ySel.innerHTML='<option value="">All Years</option>';
+  years.forEach(y=>{ const o=document.createElement('option'); o.value=y; o.textContent=y; ySel.appendChild(o); });
+  if(prevY) ySel.value=prevY;
 
-  // Subtitle
-  document.getElementById('view-sub').textContent =
-    `${rows.length.toLocaleString()} students · ${schools.length} schools`;
+  const scores=rows.map(r=>r.score||0).filter(x=>x>0);
+  const avg=scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1):'—';
+  const top=scores.length?Math.max(...scores):'—';
+  const accs=rows.map(r=>calcAcc(r));
+  const avgAcc=accs.length?(accs.reduce((a,b)=>a+b,0)/accs.length).toFixed(1):'—';
+  const invCount=rows.filter(r=>r.test_type==='Inv').length;
+  const regCount=rows.filter(r=>r.test_type==='Reg').length;
 
-  // Div stats
-  renderDivStats(rows);
-
-  applyFilters();
-}
-
-function renderDivStats(rows) {
-  const scores = rows.map(r => r.score || 0).filter(x => x > 0);
-  const avg = scores.length ? (scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1) : '—';
-  const top = scores.length ? Math.max(...scores) : '—';
-  const accs = rows.map(r => {
-    const t = (r.right_count||0)+(r.wrong_count||0)+(r.blank_count||0);
-    return t > 0 ? (r.right_count||0)/t*100 : null;
-  }).filter(x => x !== null);
-  const avgAcc = accs.length ? (accs.reduce((a,b)=>a+b,0)/accs.length).toFixed(1) : '—';
-
-  document.getElementById('div-stats').innerHTML = `
+  document.getElementById('view-sub').textContent=`${rows.length.toLocaleString()} students · ${schools.length} schools`;
+  document.getElementById('div-stats').innerHTML=`
     <div class="sc"><div class="sc-label">Students</div><div class="sc-val">${rows.length.toLocaleString()}</div></div>
-    <div class="sc"><div class="sc-label">Schools</div><div class="sc-val">${new Set(rows.map(r=>r.school)).size}</div></div>
+    <div class="sc"><div class="sc-label">Schools</div><div class="sc-val">${schools.length}</div></div>
     <div class="sc"><div class="sc-label">Avg Score</div><div class="sc-val sm">${avg}</div></div>
     <div class="sc"><div class="sc-label">Top Score</div><div class="sc-val sm">${top}</div></div>
     <div class="sc"><div class="sc-label">Avg Accuracy</div><div class="sc-val sm">${avgAcc}%</div></div>
-  `;
+    ${invCount>0?`<div class="sc"><div class="sc-label">★ Invitationals</div><div class="sc-val sm inv">${invCount.toLocaleString()}</div><div class="sc-sub">Higher difficulty</div></div>`:''}
+    ${regCount>0?`<div class="sc"><div class="sc-label">Regionals</div><div class="sc-val sm reg">${regCount.toLocaleString()}</div></div>`:''}`;
+  applyFilters();
 }
 
-/* ═══════════════════════════════════════
-   FILTER + SORT + PAGINATE
-═══════════════════════════════════════ */
-function applyFilters() {
-  const q      = document.getElementById('search').value.toLowerCase();
-  const school = document.getElementById('school-sel').value;
-  const sort   = document.getElementById('sort-sel').value;
-  const rows   = divData[currentDiv.table] || [];
+/* ═══════════ FILTER/SORT ═══════════ */
+function calcAcc(r){ const t=(r.right_count||0)+(r.wrong_count||0)+(r.blank_count||0); return t>0?(r.right_count||0)/t*100:0; }
+function rankCls(r){ return r===1?'r1':r===2?'r2':r===3?'r3':'rn'; }
 
-  filtered = rows.filter(r => {
-    const mq = !q ||
-      (r.name||'').toLowerCase().includes(q) ||
-      (r.school||'').toLowerCase().includes(q) ||
-      (r.student_id||'').toLowerCase().includes(q);
-    return mq && (!school || r.school === school);
+function applyFilters(){
+  const q=document.getElementById('search').value.toLowerCase();
+  const school=document.getElementById('school-sel').value;
+  const year=document.getElementById('year-sel').value;
+  const month=document.getElementById('month-sel').value;
+  const type=document.getElementById('type-sel').value;
+  const sort=document.getElementById('sort-sel').value;
+  const rows=divData[currentDiv.table]||[];
+  filtered=rows.filter(r=>{
+    const mq=!q||(r.name||'').toLowerCase().includes(q)||(r.school||'').toLowerCase().includes(q)||(r.student_id||'').toLowerCase().includes(q);
+    return mq&&(!school||r.school===school)&&(!year||String(r.test_year)===year)&&(!month||r.test_month===month)&&(!type||r.test_type===type);
   });
-
-  filtered.sort((a, b) => {
-    if (sort === 'rank-asc')    return (a.rank||9999)-(b.rank||9999);
-    if (sort === 'score-desc')  return (b.score||0)-(a.score||0);
-    if (sort === 'score-asc')   return (a.score||0)-(b.score||0);
-    if (sort === 'tscore-desc') return (b.t_score||0)-(a.t_score||0);
-    if (sort === 'name-asc')    return (a.name||'').localeCompare(b.name||'');
-    if (sort === 'acc-desc') {
-      const accA = calcAcc(a), accB = calcAcc(b);
-      return accB - accA;
-    }
+  filtered.sort((a,b)=>{
+    if(sort==='rank-asc')    return (a.rank||9999)-(b.rank||9999);
+    if(sort==='score-desc')  return (b.score||0)-(a.score||0);
+    if(sort==='score-asc')   return (a.score||0)-(b.score||0);
+    if(sort==='tscore-desc') return (b.t_score||0)-(a.t_score||0);
+    if(sort==='name-asc')    return (a.name||'').localeCompare(b.name||'');
+    if(sort==='acc-desc')    return calcAcc(b)-calcAcc(a);
     return 0;
   });
-
-  curPage = 1;
-  renderTable();
-  renderPagination();
+  curPage=1; renderTable(); renderPagination();
 }
 
-function calcAcc(r) {
-  const t = (r.right_count||0)+(r.wrong_count||0)+(r.blank_count||0);
-  return t > 0 ? (r.right_count||0)/t*100 : 0;
-}
-
-function rankClass(r) {
-  if (r === 1) return 'rank-1';
-  if (r === 2) return 'rank-2';
-  if (r === 3) return 'rank-3';
-  return 'rank-n';
-}
-
-/* ═══════════════════════════════════════
-   RENDER TABLE
-═══════════════════════════════════════ */
-function renderTable() {
-  const tbody = document.getElementById('tbody');
-  const start = (curPage - 1) * ROWS_PER_PAGE;
-  const page  = filtered.slice(start, start + ROWS_PER_PAGE);
-
-  document.getElementById('tbl-info').textContent =
-    `Showing ${(start+1).toLocaleString()}–${Math.min(start+ROWS_PER_PAGE, filtered.length).toLocaleString()} of ${filtered.length.toLocaleString()} students`;
-
-  // Toggle extra cols visibility
-  document.querySelectorAll('.extra-col').forEach(el => {
-    el.style.display = extraCols ? '' : 'none';
-  });
-
-  if (!page.length) {
-    tbody.innerHTML = `<tr><td colspan="10" class="tbl-state">No students found.</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = page.map(r => {
-    const acc = calcAcc(r);
-    const accPct = acc.toFixed(0);
-    const rc = rankClass(r.rank);
-    return `
-    <tr onclick="openProfile(${r.id}, '${currentDiv.table}')">
-      <td><span class="rank-num ${rc}">${r.rank ?? '—'}</span></td>
-      <td class="td-name">${escHtml(r.name || '—')}</td>
-      <td class="td-school">${escHtml(r.school || '—')}</td>
-      <td class="td-score">${r.score ?? '—'}</td>
-      <td class="td-mono td-green extra-col">${r.right_count ?? '—'}</td>
-      <td class="td-mono td-red extra-col">${r.wrong_count ?? '—'}</td>
-      <td class="td-mono td-dim extra-col">${r.blank_count ?? '—'}</td>
-      <td>
-        <div class="td-acc">
-          <div class="mini-bar"><div class="mini-bar-fill" style="width:${accPct}%"></div></div>
-          <span class="td-mono td-green">${accPct}%</span>
-        </div>
-      </td>
-      <td class="td-mono" style="color:var(--gold2)">${r.t_score ?? '—'}</td>
-      <td class="td-mono td-dim extra-col" style="font-size:11px">${escHtml(r.student_id || '—')}</td>
+/* ═══════════ TABLE RENDER ═══════════ */
+function renderTable(){
+  const tbody=document.getElementById('tbody');
+  const start=(curPage-1)*PER_PAGE;
+  const page=filtered.slice(start,start+PER_PAGE);
+  document.getElementById('tbl-info').textContent=`Showing ${(start+1).toLocaleString()}–${Math.min(start+PER_PAGE,filtered.length).toLocaleString()} of ${filtered.length.toLocaleString()} students`;
+  document.querySelectorAll('.ec').forEach(el=>el.style.display=extraCols?'':'none');
+  if(!page.length){ tbody.innerHTML=`<tr><td colspan="11" class="tbl-state">No students found.</td></tr>`; return; }
+  tbody.innerHTML=page.map(r=>{
+    const acc=calcAcc(r).toFixed(0);
+    const isInv=r.test_type==='Inv';
+    const typeBadge=r.test_type
+      ? `<span class="type-badge ${isInv?'type-inv':'type-reg'}"><span class="type-dot"></span>${r.test_type}</span>`
+      : '<span style="font-family:var(--mono);font-size:11px;color:var(--text3)">—</span>';
+    const period=[r.test_month,r.test_year].filter(Boolean).join(' ');
+    return `<tr onclick="openProfile(${r.id},'${currentDiv.table}')">
+      <td><span class="rank-num ${rankCls(r.rank)}">${r.rank??'—'}</span></td>
+      <td class="td-name">${esc(r.name||'—')}</td>
+      <td class="td-school">${esc(r.school||'—')}</td>
+      <td><div style="display:flex;flex-direction:column;gap:3px">${typeBadge}${period?`<span style="font-family:var(--mono);font-size:10px;color:var(--text3)">${esc(period)}</span>`:''}</div></td>
+      <td class="td-score">${r.score??'—'}</td>
+      <td class="td-mono td-green ec">${r.right_count??'—'}</td>
+      <td class="td-mono td-red ec">${r.wrong_count??'—'}</td>
+      <td class="td-mono td-dim ec">${r.blank_count??'—'}</td>
+      <td><div class="td-acc"><div class="mini-bar"><div class="mini-bar-fill" style="width:${acc}%"></div></div><span class="td-mono td-green">${acc}%</span></div></td>
+      <td class="td-mono" style="color:var(--gold2)">${r.t_score??'—'}</td>
+      <td class="td-mono td-dim ec" style="font-size:11px">${esc(r.student_id||'—')}</td>
     </tr>`;
   }).join('');
-
-  // Reapply extra-col visibility to new rows
-  document.querySelectorAll('.extra-col').forEach(el => {
-    el.style.display = extraCols ? '' : 'none';
-  });
+  document.querySelectorAll('.ec').forEach(el=>el.style.display=extraCols?'':'none');
 }
 
-function renderPagination() {
-  const total = Math.ceil(filtered.length / ROWS_PER_PAGE);
-  const pg    = document.getElementById('pagination');
-  if (total <= 1) { pg.innerHTML = ''; return; }
-
-  let html = `<button class="pg-btn" onclick="goPage(${curPage-1})" ${curPage===1?'disabled':''}>‹</button>`;
-
-  // Smart page number display
-  const pages = [];
-  if (total <= 7) {
-    for (let i=1; i<=total; i++) pages.push(i);
-  } else {
+function renderPagination(){
+  const total=Math.ceil(filtered.length/PER_PAGE);
+  const pg=document.getElementById('pagination');
+  if(total<=1){ pg.innerHTML=''; return; }
+  let html=`<button class="pg-btn" onclick="goPage(${curPage-1})" ${curPage===1?'disabled':''}>‹</button>`;
+  const pages=[];
+  if(total<=7){ for(let i=1;i<=total;i++) pages.push(i); }
+  else {
     pages.push(1);
-    if (curPage > 3) pages.push('…');
-    for (let i=Math.max(2,curPage-1); i<=Math.min(total-1,curPage+1); i++) pages.push(i);
-    if (curPage < total-2) pages.push('…');
+    if(curPage>3) pages.push('…');
+    for(let i=Math.max(2,curPage-1);i<=Math.min(total-1,curPage+1);i++) pages.push(i);
+    if(curPage<total-2) pages.push('…');
     pages.push(total);
   }
-
-  pages.forEach(p => {
-    if (p === '…') {
-      html += `<span class="pg-info">…</span>`;
-    } else {
-      html += `<button class="pg-btn ${p===curPage?'cur':''}" onclick="goPage(${p})">${p}</button>`;
-    }
-  });
-
-  html += `<button class="pg-btn" onclick="goPage(${curPage+1})" ${curPage===total?'disabled':''}>›</button>`;
-  pg.innerHTML = html;
+  pages.forEach(p=>{ html+=p==='…'?`<span class="pg-info">…</span>`:`<button class="pg-btn ${p===curPage?'cur':''}" onclick="goPage(${p})">${p}</button>`; });
+  html+=`<button class="pg-btn" onclick="goPage(${curPage+1})" ${curPage===total?'disabled':''}>›</button>`;
+  pg.innerHTML=html;
 }
+function goPage(n){ const total=Math.ceil(filtered.length/PER_PAGE); if(n<1||n>total) return; curPage=n; renderTable(); renderPagination(); window.scrollTo({top:56,behavior:'smooth'}); }
+function toggleExtraCols(){ extraCols=!extraCols; document.getElementById('tog-cols').classList.toggle('active',extraCols); document.querySelectorAll('.ec').forEach(el=>el.style.display=extraCols?'':'none'); }
 
-function goPage(n) {
-  const total = Math.ceil(filtered.length / ROWS_PER_PAGE);
-  if (n < 1 || n > total) return;
-  curPage = n;
-  renderTable();
-  renderPagination();
-  document.getElementById('view-leaderboard').scrollTop = 0;
-  window.scrollTo({ top: 56, behavior: 'smooth' });
+/* ═══════════════════════════════════════════════
+   STUDENT PROFILE — RICH STATISTICS WITH TEST CONTEXT
+═══════════════════════════════════════════════ */
+function openProfile(id, tableName){
+  const rows=divData[tableName]||[];
+  const s=rows.find(r=>r.id===id);
+  if(!s) return;
+  currentStudent={...s, _table:tableName};
+  buildProfile(s, tableName);
+  document.getElementById('prof-overlay').classList.add('open');
+  document.getElementById('prof-panel').classList.add('open');
+  document.body.style.overflow='hidden';
 }
+function closeProfile(){ document.getElementById('prof-overlay').classList.remove('open'); document.getElementById('prof-panel').classList.remove('open'); document.body.style.overflow=''; }
+function closeProfPanel(e){ if(e.target===document.getElementById('prof-overlay')) closeProfile(); }
 
-function toggleExtraCols() {
-  extraCols = !extraCols;
-  document.getElementById('tog-cols').classList.toggle('active', extraCols);
-  document.querySelectorAll('.extra-col').forEach(el => {
-    el.style.display = extraCols ? '' : 'none';
-  });
-}
+function buildProfile(s, tableName){
+  const divRows  = divData[tableName] || [];
+  const divLabel = DIVISIONS.find(d=>d.table===tableName)?.label || tableName;
+  const isInv = s.test_type === 'Inv';
+  const isReg = s.test_type === 'Reg';
 
-/* ═══════════════════════════════════════
-   STUDENT PROFILE
-═══════════════════════════════════════ */
-function openProfile(id, tableName) {
-  const rows = divData[tableName] || [];
-  const s = rows.find(r => r.id === id);
-  if (!s) return;
-  currentStudent = { ...s, _table: tableName };
-  renderProfileModal(s);
-  document.getElementById('profile-overlay').classList.add('open');
-}
+  /* Core answer stats */
+  const total    = (s.right_count||0)+(s.wrong_count||0)+(s.blank_count||0);
+  const acc      = total>0 ? (s.right_count||0)/total*100 : 0;
+  const rightPct = total>0 ? (s.right_count||0)/total*100 : 0;
+  const wrongPct = total>0 ? (s.wrong_count||0)/total*100 : 0;
+  const blankPct = total>0 ? (s.blank_count||0)/total*100 : 0;
 
-function renderProfileModal(s) {
-  const total = (s.right_count||0)+(s.wrong_count||0)+(s.blank_count||0);
-  const acc   = total > 0 ? Math.round((s.right_count||0)/total*100) : 0;
-  const divLabel = DIVISIONS.find(d => d.table === currentStudent._table)?.label || currentStudent._table;
+  /* Division-wide stats */
+  const divScores   = divRows.map(r=>r.score||0).filter(x=>x>0).sort((a,b)=>a-b);
+  const divAccs     = divRows.map(r=>calcAcc(r));
+  const divAvgScore = divScores.length ? divScores.reduce((a,b)=>a+b,0)/divScores.length : 0;
+  const divStd      = stdDev(divScores);
+  const overallPctl = percentileOf(divScores, s.score||0);
+  const overallVsAvg= (s.score||0) - divAvgScore;
+  const zScore      = divStd>0 ? ((s.score||0)-divAvgScore)/divStd : 0;
+  const divAvgAcc   = divAccs.length ? divAccs.reduce((a,b)=>a+b,0)/divAccs.length : 0;
+  const accVsAvg    = acc - divAvgAcc;
 
-  // Hero
-  const rn = s.rank || 0;
-  const rClass = rn===1?'r1':rn===2?'r2':rn===3?'r3':'rn';
-  document.getElementById('profile-hero').innerHTML = `
-    <div class="profile-rank-badge ${rClass}">#${s.rank??'—'}</div>
-    <div class="profile-info">
-      <div class="profile-name">${escHtml(s.name||'Unknown')}</div>
-      <div class="profile-school">${escHtml(s.school||'—')}</div>
-      <div class="profile-id">
-        <span style="color:var(--gold);margin-right:10px">${escHtml(divLabel)}</span>
-        ID: ${escHtml(s.student_id||'—')}
+  /* Same-type stats (Inv vs Reg comparison) */
+  const sameTypeRows   = divRows.filter(r => !s.test_type || r.test_type===s.test_type);
+  const sameTypeScores = sameTypeRows.map(r=>r.score||0).filter(x=>x>0).sort((a,b)=>a-b);
+  const sameTypePctl   = percentileOf(sameTypeScores, s.score||0);
+  const sameTypeAvg    = sameTypeScores.length ? sameTypeScores.reduce((a,b)=>a+b,0)/sameTypeScores.length : 0;
+  const sameTypeStd    = stdDev(sameTypeScores);
+  const sameTypeZ      = sameTypeStd>0 ? ((s.score||0)-sameTypeAvg)/sameTypeStd : 0;
+  const sameTypeRank   = sameTypeRows.filter(r=>(r.score||0)>(s.score||0)).length+1;
+
+  /* Inv vs Reg breakdown for this division */
+  const invRows    = divRows.filter(r=>r.test_type==='Inv');
+  const regRows    = divRows.filter(r=>r.test_type==='Reg');
+  const invScores  = invRows.map(r=>r.score||0).filter(x=>x>0);
+  const regScores  = regRows.map(r=>r.score||0).filter(x=>x>0);
+  const invAvg     = invScores.length ? invScores.reduce((a,b)=>a+b,0)/invScores.length : null;
+  const regAvg     = regScores.length ? regScores.reduce((a,b)=>a+b,0)/regScores.length : null;
+
+  /* School stats */
+  const schoolRows   = divRows.filter(r=>r.school===s.school);
+  const schoolScores = schoolRows.map(r=>r.score||0).sort((a,b)=>a-b);
+  const schoolPctl   = percentileOf(schoolScores, s.score||0);
+  const schoolRank   = schoolRows.filter(r=>(r.score||0)>(s.score||0)).length+1;
+  const schoolAvg    = schoolScores.length ? schoolScores.reduce((a,b)=>a+b,0)/schoolScores.length : 0;
+
+  /* Cross-division data */
+  const crossData = getCrossDivData(s);
+
+  /* Tags */
+  const tags = [];
+  if(isInv) tags.push({label:'Invitational ★',cls:'purple'});
+  else if(isReg) tags.push({label:'Regional',cls:'blue'});
+  const refPctl = s.test_type ? sameTypePctl : overallPctl;
+  if(refPctl>=95) tags.push({label:'Top 5%',cls:'gold'});
+  else if(refPctl>=90) tags.push({label:'Top 10%',cls:'gold'});
+  else if(refPctl>=75) tags.push({label:'Top 25%',cls:'green'});
+  if(acc>=90) tags.push({label:'90%+ Accuracy',cls:'green'});
+  if(s.rank===1) tags.push({label:'#1 Overall',cls:'gold'});
+  if(schoolRank===1) tags.push({label:'School Leader',cls:'blue'});
+  if(crossData.length>1) tags.push({label:`${crossData.length} Divisions`,cls:'purple'});
+  if(sameTypeZ>2) tags.push({label:'Exceptional',cls:'gold'});
+
+  /* Rank badge */
+  const rn=s.rank||0;
+  const rClass=rn===1?'ppb-1':rn===2?'ppb-2':rn===3?'ppb-3':'ppb-n';
+  const testPeriod=[s.test_month,s.test_year].filter(Boolean).join(' ');
+
+  document.getElementById('pp-hero').innerHTML=`
+    <div class="pp-rank-badge ${rClass}">#${s.rank??'—'}</div>
+    <div class="pp-hero-info">
+      <div class="pp-name">${esc(s.name||'Unknown')}</div>
+      <div class="pp-school">${esc(s.school||'Unknown School')}</div>
+      <div class="pp-meta">
+        <span><span class="tag">Division:</span><span class="val">${esc(divLabel)}</span></span>
+        <span><span class="tag">ID:</span><span class="val">${esc(s.student_id||'—')}</span></span>
+        <span><span class="tag">T-Score:</span><span class="val" style="color:var(--gold2)">${s.t_score??'—'}</span></span>
+        ${testPeriod?`<span><span class="tag">Period:</span><span class="val">${esc(testPeriod)}</span></span>`:''}
+      </div>
+      ${s.test_type?`<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:8px">
+        <span class="type-badge ${isInv?'type-inv':'type-reg'}" style="font-size:12px"><span class="type-dot"></span>${isInv?'Invitational':'Regional'}</span>
+        ${isInv?`<span style="font-family:var(--mono);font-size:10px;color:#c4b5fd">★ Higher difficulty test</span>`:''}
+      </div>`:''}
+      ${tags.length?`<div class="pp-tags" style="margin-top:8px">${tags.map(t=>`<span class="pp-tag ${t.cls}">${t.label}</span>`).join('')}</div>`:''}
+    </div>`;
+
+  let html = '';
+
+  /* ── SECTION 1: TEST INFORMATION ── */
+  if(s.test_type || s.test_month || s.test_year){
+    html += `
+    <div class="pp-section">
+      <div class="pp-sec-title">Test Information</div>
+      <div class="context-grid">
+        <div class="ctx-card" style="${isInv?'border-color:rgba(167,139,250,.3)':isReg?'border-color:rgba(79,142,247,.25)':''}">
+          <div class="ctx-label">Test Type</div>
+          ${s.test_type?`<div style="margin-bottom:6px"><span class="type-badge ${isInv?'type-inv':'type-reg'}" style="font-size:13px"><span class="type-dot"></span>${isInv?'Invitational':'Regional'}</span></div>
+          <div class="ctx-sub">${isInv?'★ Higher difficulty than Regional':'Standard competition difficulty'}</div>`
+          :`<div class="ctx-val" style="font-size:20px;color:var(--text3)">—</div>`}
+        </div>
+        <div class="ctx-card">
+          <div class="ctx-label">Test Period</div>
+          <div class="ctx-val" style="font-size:24px">${testPeriod||'—'}</div>
+          <div class="ctx-sub">Academic year competition</div>
+        </div>
+      </div>
+      ${(invAvg!==null||regAvg!==null)?`
+      <div class="diff-compare">
+        ${invAvg!==null?`<div class="diff-card inv-card">
+          <div class="diff-card-header">
+            <span class="diff-card-type inv">★ Invitational</span>
+            <span class="diff-card-count">${invRows.length.toLocaleString()} results</span>
+          </div>
+          <div class="diff-card-avg inv">${invAvg.toFixed(1)}</div>
+          <div class="diff-card-sub">Average score (harder)</div>
+          ${isInv?`<div class="diff-you-marker"><span class="diff-you-dot"></span><span style="color:var(--gold);font-family:var(--mono);font-size:11px">You: ${s.score??'—'} (${sameTypePctl>=50?'+':''}${(sameTypePctl-50).toFixed(0)}th pctile vs Inv)</span></div>`:''}
+        </div>`:''}
+        ${regAvg!==null?`<div class="diff-card reg-card">
+          <div class="diff-card-header">
+            <span class="diff-card-type reg">Regional</span>
+            <span class="diff-card-count">${regRows.length.toLocaleString()} results</span>
+          </div>
+          <div class="diff-card-avg reg">${regAvg.toFixed(1)}</div>
+          <div class="diff-card-sub">Average score</div>
+          ${isReg?`<div class="diff-you-marker"><span class="diff-you-dot"></span><span style="color:var(--gold);font-family:var(--mono);font-size:11px">You: ${s.score??'—'} (${sameTypePctl>=50?'+':''}${(sameTypePctl-50).toFixed(0)}th pctile vs Reg)</span></div>`:''}
+        </div>`:''}
+      </div>`:''}
+      ${s.test_type?`<div class="test-info-bar ${isInv?'inv-bar':'reg-bar'}">
+        <strong style="color:${isInv?'#c4b5fd':'var(--blue2)'}">${isInv?'Invitational':'Regional'} context:</strong>
+        Ranked <strong style="color:var(--text)">#${sameTypeRank}</strong> of <strong style="color:var(--text)">${sameTypeRows.length.toLocaleString()}</strong> students
+        in ${isInv?'Invitational':'Regional'} tests for this division — <strong style="color:var(--text)">${sameTypePctl.toFixed(1)}th percentile</strong> among same test type.
+        ${isInv&&invAvg!==null&&regAvg!==null?`<br>Note: Invitational avg (${invAvg.toFixed(1)}) is typically ${(regAvg-invAvg).toFixed(1)<0?'lower':'higher'} than Regional avg (${regAvg.toFixed(1)}) — this score carries extra weight.`:''}
+      </div>`:''}
+    </div>`;
+  }
+
+  /* ── SECTION 2: KEY METRICS ── */
+  const scoreVsTypeAvg = (s.score||0) - sameTypeAvg;
+  const pctileClass = sameTypePctl>=90?'elite':sameTypePctl>=75?'good':sameTypePctl>=50?'avg':'low';
+  html += `
+  <div class="pp-section">
+    <div class="pp-sec-title">Key Metrics <span class="pp-sec-subtitle">${s.test_type?`vs ${isInv?'Invitational':'Regional'} avg`:'vs division avg'}</span></div>
+    <div class="pp-metrics">
+      <div class="pp-metric highlight gold">
+        <div class="pp-metric-val gold">${s.score??'—'}</div>
+        <div class="pp-metric-label">Score</div>
+        <div class="pp-metric-sub">${scoreVsTypeAvg>=0?'+':''}${scoreVsTypeAvg.toFixed(1)} vs avg</div>
+      </div>
+      <div class="pp-metric highlight green">
+        <div class="pp-metric-val green">${acc.toFixed(1)}%</div>
+        <div class="pp-metric-label">Accuracy</div>
+        <div class="pp-metric-sub">${accVsAvg>=0?'+':''}${accVsAvg.toFixed(1)}% vs div avg</div>
+      </div>
+      <div class="pp-metric highlight blue">
+        <div class="pp-metric-val blue">#${s.rank??'—'}</div>
+        <div class="pp-metric-label">Overall Rank</div>
+        <div class="pp-metric-sub">of ${divRows.length.toLocaleString()} total</div>
+      </div>
+      <div class="pp-metric ${s.test_type?'highlight purple':''}">
+        <div class="pp-metric-val ${s.test_type?'purple':'gold'}">#${sameTypeRank}</div>
+        <div class="pp-metric-label">${s.test_type?`${isInv?'Inv':'Reg'} Rank`:'T-Score'}</div>
+        <div class="pp-metric-sub">${s.test_type?`of ${sameTypeRows.length.toLocaleString()} ${isInv?'Inv':'Reg'}`:`${s.t_score??'—'}`}</div>
+      </div>
+      <div class="pp-metric">
+        <div class="pp-metric-val green">${s.right_count??'—'}</div>
+        <div class="pp-metric-label">Correct</div>
+        <div class="pp-metric-sub">${rightPct.toFixed(0)}% of total</div>
+      </div>
+      <div class="pp-metric">
+        <div class="pp-metric-val red">${s.wrong_count??'—'}</div>
+        <div class="pp-metric-label">Wrong</div>
+        <div class="pp-metric-sub">${wrongPct.toFixed(0)}% of total</div>
+      </div>
+      <div class="pp-metric">
+        <div class="pp-metric-val dim">${s.blank_count??'—'}</div>
+        <div class="pp-metric-label">Blank</div>
+        <div class="pp-metric-sub">${blankPct.toFixed(0)}% of total</div>
+      </div>
+      <div class="pp-metric">
+        <div class="pp-metric-val gold">${s.t_score??'—'}</div>
+        <div class="pp-metric-label">T-Score</div>
+        <div class="pp-metric-sub">Standardized</div>
       </div>
     </div>
-  `;
+  </div>`;
 
-  // Gather cross-division data for this student
-  const crossDiv = gatherCrossDivData(s);
-
-  // Stats
-  const testsPlayed = crossDiv.length;
-  const avgRank  = crossDiv.length ? Math.round(crossDiv.reduce((a,b)=>a+(b.rank||0),0)/crossDiv.length) : s.rank || '—';
-  const avgScore = crossDiv.length ? (crossDiv.reduce((a,b)=>a+(b.score||0),0)/crossDiv.length).toFixed(1) : s.score || '—';
-  const bestDiv  = crossDiv.length ? crossDiv.sort((a,b)=>(a.rank||999)-(b.rank||999))[0] : null;
-
-  document.getElementById('profile-stats').innerHTML = `
-    <div class="ps"><div class="ps-val gold">${s.score??'—'}</div><div class="ps-label">Score</div></div>
-    <div class="ps"><div class="ps-val green">${s.right_count??'—'}</div><div class="ps-label">Right</div></div>
-    <div class="ps"><div class="ps-val red">${s.wrong_count??'—'}</div><div class="ps-label">Wrong</div></div>
-    <div class="ps"><div class="ps-val dim">${s.blank_count??'—'}</div><div class="ps-label">Blank</div></div>
-    <div class="ps"><div class="ps-val blue">${testsPlayed}</div><div class="ps-label">Divisions</div></div>
-    <div class="ps"><div class="ps-val gold">${avgScore}</div><div class="ps-label">Avg Score</div></div>
-    <div class="ps"><div class="ps-val dim">${typeof avgRank === 'number' ? '#'+avgRank : avgRank}</div><div class="ps-label">Avg Rank</div></div>
-    <div class="ps"><div class="ps-val green">${s.t_score??'—'}</div><div class="ps-label">T-Score</div></div>
-  `;
-
-  // Accuracy bar
-  document.getElementById('profile-acc').innerHTML = `
-    <div class="acc-label">
-      <span>Answer Accuracy (${divLabel})</span>
-      <span style="color:var(--green);font-family:var(--mono);font-size:13px">${acc}%</span>
+  /* ── SECTION 3: ANSWER BREAKDOWN ── */
+  html += `
+  <div class="pp-section">
+    <div class="pp-sec-title">Answer Breakdown</div>
+    <div class="acc-full">
+      <div class="acc-donut-wrap">
+        <canvas id="donut-chart"></canvas>
+        <div class="acc-donut-center">
+          <div class="acc-donut-pct">${acc.toFixed(0)}%</div>
+          <div class="acc-donut-sub">Accuracy</div>
+        </div>
+      </div>
+      <div class="acc-bars">
+        <div class="acc-bar-row">
+          <div class="acc-bar-label" style="color:var(--green)">Correct</div>
+          <div class="acc-bar-track"><div class="acc-bar-fill green" style="width:${rightPct}%"></div></div>
+          <div class="acc-bar-val" style="color:var(--green)">${s.right_count??0}</div>
+          <div class="acc-bar-pct">${rightPct.toFixed(1)}%</div>
+        </div>
+        <div class="acc-bar-row">
+          <div class="acc-bar-label" style="color:var(--red)">Wrong</div>
+          <div class="acc-bar-track"><div class="acc-bar-fill red" style="width:${wrongPct}%"></div></div>
+          <div class="acc-bar-val" style="color:var(--red)">${s.wrong_count??0}</div>
+          <div class="acc-bar-pct">${wrongPct.toFixed(1)}%</div>
+        </div>
+        <div class="acc-bar-row">
+          <div class="acc-bar-label" style="color:var(--text3)">Blank</div>
+          <div class="acc-bar-track"><div class="acc-bar-fill dim" style="width:${blankPct}%"></div></div>
+          <div class="acc-bar-val" style="color:var(--text3)">${s.blank_count??0}</div>
+          <div class="acc-bar-pct">${blankPct.toFixed(1)}%</div>
+        </div>
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border2);font-family:var(--mono);font-size:11px;color:var(--text3)">
+          Total questions: <strong style="color:var(--text)">${total}</strong>
+          ${total>0?`&nbsp;·&nbsp; pts/question: <strong style="color:var(--gold2)">${((s.score||0)/total).toFixed(3)}</strong>`:''}
+        </div>
+      </div>
     </div>
-    <div class="acc-track"><div class="acc-fill" style="width:${acc}%"></div></div>
-    <div style="display:flex;gap:24px;margin-top:12px;font-family:var(--mono);font-size:11px;color:var(--text3)">
-      <span style="color:var(--green)">✓ ${s.right_count??0} correct</span>
-      <span style="color:var(--red)">✗ ${s.wrong_count??0} wrong</span>
-      <span style="color:var(--text3)">— ${s.blank_count??0} blank</span>
-      <span>Total: ${total}</span>
-    </div>
-  `;
+  </div>`;
 
-  // Cross-division breakdown
-  const allDivRows = gatherCrossDivDataFull(s);
-  let divHTML = `<div class="sec-title">Performance by Division</div>`;
-  if (allDivRows.length === 0) {
-    divHTML += `<div style="font-family:var(--mono);font-size:11px;color:var(--text3)">Only one division loaded. Load more divisions to see cross-division stats.</div>`;
-  } else {
-    allDivRows.forEach(d => {
-      const da = d.total > 0 ? Math.round(d.right/d.total*100) : 0;
-      divHTML += `
-        <div class="div-row">
-          <div class="div-row-name">${escHtml(d.divLabel)}</div>
-          <div class="div-row-rank">#${d.rank??'—'}</div>
-          <div class="div-row-score">${d.score??'—'}</div>
-          <div class="div-row-meta">
-            <span style="color:var(--green)">✓${d.right??'—'}</span>
-            <span style="color:var(--red);margin:0 6px">✗${d.wrong??'—'}</span>
-            <span style="color:var(--text3)">—${d.blank??'—'}</span>
-          </div>
-          <div class="div-row-acc">
-            <div class="div-row-acc-label">${da}%</div>
-            <div class="acc-track" style="height:3px"><div class="acc-fill" style="width:${da}%"></div></div>
-          </div>
-        </div>`;
-    });
+  /* ── SECTION 4: RANKING CONTEXT ── */
+  const pGaugeClass = overallPctl>=90?'elite':overallPctl>=75?'good':overallPctl>=50?'avg':'low';
+  const stGaugeClass = sameTypePctl>=90?'elite':sameTypePctl>=75?'good':sameTypePctl>=50?'avg':'low';
+  const scGaugeClass = schoolPctl>=75?'good':'avg';
+  html += `
+  <div class="pp-section">
+    <div class="pp-sec-title">Ranking &amp; Percentiles</div>
+    <div class="percentile-row">
+      <div class="pct-card">
+        <div class="pct-title">Overall — All ${esc(divLabel)} Students</div>
+        <div class="pct-big ${pGaugeClass}">${overallPctl.toFixed(1)}th</div>
+        <div class="pct-gauge-track"><div class="pct-gauge-fill ${pGaugeClass}" style="width:${overallPctl}%"></div></div>
+        <div class="pct-nums"><span>0th</span><span>50th</span><span>100th</span></div>
+      </div>
+      ${s.test_type?`<div class="pct-card" style="${isInv?'border-color:rgba(167,139,250,.2)':'border-color:rgba(79,142,247,.15)'}">
+        <div class="pct-title">${isInv?'★ Invitational':'Regional'} Tests Only</div>
+        <div class="pct-big ${stGaugeClass}">${sameTypePctl.toFixed(1)}th</div>
+        <div class="pct-gauge-track"><div class="pct-gauge-fill ${stGaugeClass}" style="width:${sameTypePctl}%"></div></div>
+        <div class="pct-nums"><span>0th</span><span>50th</span><span>100th</span></div>
+      </div>`:''}
+      <div class="pct-card">
+        <div class="pct-title">School — ${esc(s.school||'Unknown')}</div>
+        <div class="pct-big ${scGaugeClass}">${schoolPctl.toFixed(1)}th</div>
+        <div class="pct-gauge-track"><div class="pct-gauge-fill ${scGaugeClass}" style="width:${schoolPctl}%"></div></div>
+        <div class="pct-nums"><span>0th</span><span>50th</span><span>100th</span></div>
+      </div>
+    </div>
+    <div class="context-grid" style="margin-top:10px">
+      <div class="ctx-card">
+        <div class="ctx-label">School Rank</div>
+        <div class="ctx-val" style="color:var(--blue2)">#${schoolRank} <span style="font-size:16px;color:var(--text3)">of ${schoolRows.length}</span></div>
+        <div class="ctx-sub">${esc(s.school||'—')}</div>
+      </div>
+      <div class="ctx-card">
+        <div class="ctx-label">School Avg Score</div>
+        <div class="ctx-val">${schoolAvg.toFixed(1)}</div>
+        <div class="ctx-sub">${s.score!=null?((s.score||0)>=schoolAvg?'+':'')+((s.score||0)-schoolAvg).toFixed(1)+' vs school avg':''}</div>
+      </div>
+      <div class="ctx-card">
+        <div class="ctx-label">${s.test_type?`${isInv?'Inv':'Reg'} Avg (division)`:'Division Avg'}</div>
+        <div class="ctx-val" style="color:${isInv?'#c4b5fd':isReg?'var(--blue2)':'var(--text)'}">${sameTypeAvg.toFixed(1)}</div>
+        <div class="ctx-sub">${overallVsAvg>=0?'+':''}${overallVsAvg.toFixed(1)} pts vs overall avg (${divAvgScore.toFixed(1)})</div>
+      </div>
+      <div class="ctx-card">
+        <div class="ctx-label">Z-Score ${s.test_type?`(${isInv?'Inv':'Reg'})`:''}</div>
+        <div class="ctx-val" style="color:${sameTypeZ>=1?'var(--green)':sameTypeZ<=-1?'var(--red)':'var(--text)'}">${sameTypeZ>=0?'+':''}${sameTypeZ.toFixed(2)}</div>
+        <div class="ctx-sub">Std devs from ${s.test_type?`${isInv?'Inv':'Reg'} `:''}mean (σ=${sameTypeStd.toFixed(2)})</div>
+      </div>
+    </div>
+  </div>`;
+
+  /* ── SECTION 5: CROSS-DIVISION ── */
+  if(crossData.length>0){
+    const avgScore=crossData.reduce((a,b)=>a+(b.score||0),0)/crossData.length;
+    const avgRank=Math.round(crossData.reduce((a,b)=>a+(b.rank||0),0)/crossData.length);
+    const bestDiv=crossData.slice().sort((a,b)=>(a.rank||9999)-(b.rank||9999))[0];
+    html += `
+    <div class="pp-section">
+      <div class="pp-sec-title">Performance Across Divisions</div>
+      <div class="consistency-row" style="margin-bottom:14px">
+        <div class="cons-box"><div class="cons-val" style="color:var(--gold)">${crossData.length}</div><div class="cons-label">Divisions</div></div>
+        <div class="cons-box"><div class="cons-val" style="color:var(--blue2)">${avgScore.toFixed(1)}</div><div class="cons-label">Avg Score</div></div>
+        <div class="cons-box"><div class="cons-val" style="color:var(--text2)">#${avgRank}</div><div class="cons-label">Avg Rank</div></div>
+        <div class="cons-box"><div class="cons-val" style="color:var(--green);font-size:18px">${bestDiv?esc(bestDiv.divLabel):'—'}</div><div class="cons-label" style="font-size:8px">Best Division</div></div>
+      </div>
+      <div style="overflow-x:auto">
+      <table class="div-table">
+        <thead><tr>
+          <th>Division</th><th>Type</th><th>Period</th><th>Rank</th><th>Score</th><th>Percentile</th><th>Accuracy</th><th>Right</th><th>Wrong</th><th>T-Score</th>
+        </tr></thead>
+        <tbody>
+        ${crossData.map(d=>{
+          const dAcc=d.total>0?Math.round(d.right/d.total*100):0;
+          const dRows=divData[d.table]||[];
+          const dSameType=d.testType?dRows.filter(r=>r.test_type===d.testType):dRows;
+          const dScores=dSameType.map(r=>r.score||0).filter(x=>x>0).sort((a,b)=>a-b);
+          const dPctl=percentileOf(dScores, d.score||0);
+          const dAvg=dScores.length?dScores.reduce((a,b)=>a+b,0)/dScores.length:0;
+          const vs=(d.score||0)-dAvg;
+          const isCur=d.table===tableName;
+          const barColor=dAcc>=80?'var(--green)':dAcc>=60?'var(--amber)':'var(--red)';
+          const pC=dPctl>=90?'elite':dPctl>=75?'good':'avg';
+          const dIsInv=d.testType==='Inv', dIsReg=d.testType==='Reg';
+          return `<tr style="${isCur?'background:rgba(240,192,64,.04)':''}">
+            <td><span class="div-name-cell${isCur?' current':''}">${esc(d.divLabel)}${isCur?' ◀':''}</span></td>
+            <td>${d.testType?`<span class="type-badge ${dIsInv?'type-inv':'type-reg'}" style="font-size:10px;padding:2px 7px"><span class="type-dot"></span>${d.testType}</span>`:'-'}</td>
+            <td><span style="font-family:var(--mono);font-size:11px;color:var(--text3)">${[d.testMonth,d.testYear].filter(Boolean).join(' ')||'—'}</span></td>
+            <td><span class="div-rank-cell ${rankCls(d.rank)}">#${d.rank??'—'}</span></td>
+            <td><span class="div-score-cell">${d.score??'—'}</span></td>
+            <td>
+              <span class="div-pct-cell ${pC}">${dPctl.toFixed(0)}th</span>
+              <div class="div-vs ${vs>=0?'above':'below'}">${vs>=0?'+':''}${vs.toFixed(1)}</div>
+            </td>
+            <td><div class="div-acc-cell"><div class="div-mini-bar"><div class="div-mini-bar-fill" style="width:${dAcc}%;background:${barColor}"></div></div><span style="font-family:var(--mono);font-size:12px;color:${barColor}">${dAcc}%</span></div></td>
+            <td style="color:var(--green);font-family:var(--mono);font-size:12px">${d.right??'—'}</td>
+            <td style="color:var(--red);font-family:var(--mono);font-size:12px">${d.wrong??'—'}</td>
+            <td style="color:var(--gold2);font-family:var(--mono);font-size:12px">${d.tscore??'—'}</td>
+          </tr>`;
+        }).join('')}
+        </tbody>
+      </table>
+      </div>
+    </div>`;
+
+    if(crossData.length>=2){
+      html+=`<div class="pp-section"><div class="pp-sec-title">Score vs Division Average</div><div class="pp-chart-wrap"><canvas id="pp-chart-div"></canvas></div></div>`;
+    }
   }
-  document.getElementById('profile-divs').innerHTML = divHTML;
 
-  // Cross-division chart
-  const chartDiv = document.getElementById('profile-chart');
-  if (allDivRows.length > 1) {
-    chartDiv.style.display = 'block';
-    const old = Chart.getChart('c-profile');
-    if (old) old.destroy();
-    new Chart(document.getElementById('c-profile'), {
-      type: 'bar',
-      data: {
-        labels: allDivRows.map(d => d.divLabel),
-        datasets: [{
-          data: allDivRows.map(d => d.score || 0),
-          backgroundColor: 'rgba(240,192,64,0.25)',
-          borderColor: 'rgba(240,192,64,0.8)',
-          borderWidth: 1,
-          borderRadius: 2,
-        }]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { ticks: { color: '#5a6480', font: { family: "'JetBrains Mono'" } }, grid: { color: 'rgba(255,255,255,0.04)' } },
-          y: { ticks: { color: '#5a6480', font: { family: "'JetBrains Mono'" } }, grid: { color: 'rgba(255,255,255,0.04)' } }
-        }
+  document.getElementById('pp-body').innerHTML=html;
+
+  /* Donut chart */
+  setTimeout(()=>{
+    const dCtx=document.getElementById('donut-chart');
+    if(dCtx){ const old=Chart.getChart(dCtx); if(old) old.destroy();
+      new Chart(dCtx,{type:'doughnut',data:{datasets:[{data:[s.right_count||0,s.wrong_count||0,s.blank_count||0],backgroundColor:['rgba(52,211,153,.75)','rgba(248,113,113,.75)','rgba(90,100,128,.4)'],borderColor:['#34d399','#f87171','#5a6480'],borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,cutout:'72%',plugins:{legend:{display:false}}}});
+    }
+    /* Cross-div bar chart */
+    if(crossData.length>=2){
+      const ctx=document.getElementById('pp-chart-div');
+      if(ctx){ const old=Chart.getChart(ctx); if(old) old.destroy();
+        const mf={family:"'JetBrains Mono'"}, gc='rgba(255,255,255,.04)', tc='#5a6480';
+        const avgs=crossData.map(d=>{
+          const dRows=divData[d.table]||[];
+          const dSame=d.testType?dRows.filter(r=>r.test_type===d.testType):dRows;
+          const sc=dSame.map(r=>r.score||0).filter(x=>x>0);
+          return sc.length?sc.reduce((a,b)=>a+b,0)/sc.length:0;
+        });
+        const typeColors=crossData.map(d=>d.testType==='Inv'?'rgba(167,139,250,.35)':'rgba(79,142,247,.25)');
+        const typeBorders=crossData.map(d=>d.testType==='Inv'?'rgba(196,181,253,.8)':'rgba(122,171,255,.7)');
+        new Chart(ctx,{type:'bar',data:{labels:crossData.map(d=>d.divLabel+(d.testType?` (${d.testType})`:'')),datasets:[
+          {label:'This Student',data:crossData.map(d=>d.score||0),backgroundColor:'rgba(240,192,64,.3)',borderColor:'rgba(240,192,64,.9)',borderWidth:1,borderRadius:2},
+          {label:'Type Avg',data:avgs,backgroundColor:'rgba(255,255,255,.05)',borderColor:'rgba(255,255,255,.2)',borderWidth:1,borderRadius:2}
+        ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:tc,font:mf,boxWidth:12,boxHeight:3}}},scales:{x:{ticks:{color:tc,font:mf},grid:{color:gc}},y:{ticks:{color:tc,font:mf},grid:{color:gc}}}}});
       }
-    });
-  } else {
-    chartDiv.style.display = 'none';
-  }
+    }
+  },50);
 }
 
-// Return entries for all loaded divisions that have this student (matched by student_id)
-function gatherCrossDivDataFull(s) {
-  const results = [];
-  DIVISIONS.forEach(div => {
-    if (!divData[div.table]) return;
-    const match = divData[div.table].find(r =>
-      r.student_id && s.student_id && r.student_id === s.student_id
-    );
-    if (match) {
-      const t = (match.right_count||0)+(match.wrong_count||0)+(match.blank_count||0);
-      results.push({
-        divLabel: div.label,
-        rank: match.rank,
-        score: match.score,
-        right: match.right_count,
-        wrong: match.wrong_count,
-        blank: match.blank_count,
-        total: t,
-      });
+function getCrossDivData(s){
+  if(!s.student_id) return [];
+  const results=[];
+  DIVISIONS.forEach(div=>{
+    if(!divData[div.table]) return;
+    const m=divData[div.table].find(r=>r.student_id&&r.student_id===s.student_id);
+    if(m){
+      const t=(m.right_count||0)+(m.wrong_count||0)+(m.blank_count||0);
+      results.push({divLabel:div.label,table:div.table,rank:m.rank,score:m.score,right:m.right_count,wrong:m.wrong_count,blank:m.blank_count,tscore:m.t_score,total:t,testType:m.test_type,testMonth:m.test_month,testYear:m.test_year});
     }
   });
   return results;
 }
 
-function gatherCrossDivData(s) {
-  if (!s.student_id) return [];
-  const results = [];
-  DIVISIONS.forEach(div => {
-    if (!divData[div.table]) return;
-    const m = divData[div.table].find(r => r.student_id === s.student_id);
-    if (m) results.push(m);
-  });
-  return results;
-}
-
-function openEditFromProfile() {
-  const s = currentStudent;
-  document.getElementById('e-name').value   = s.name || '';
-  document.getElementById('e-rank').value   = s.rank || '';
-  document.getElementById('e-school').value = s.school || '';
-  document.getElementById('e-score').value  = s.score || '';
-  document.getElementById('e-tscore').value = s.t_score || '';
-  document.getElementById('e-right').value  = s.right_count || '';
-  document.getElementById('e-wrong').value  = s.wrong_count || '';
-  document.getElementById('e-blank').value  = s.blank_count || '';
-  document.getElementById('e-sid').value    = s.student_id || '';
-  closeOverlay('profile-overlay');
+/* ═══════════ EDIT ═══════════ */
+function openEditFromProfile(){
+  const s=currentStudent;
+  document.getElementById('e-name').value=s.name||'';
+  document.getElementById('e-rank').value=s.rank||'';
+  document.getElementById('e-school').value=s.school||'';
+  document.getElementById('e-score').value=s.score||'';
+  document.getElementById('e-tscore').value=s.t_score||'';
+  document.getElementById('e-right').value=s.right_count||'';
+  document.getElementById('e-wrong').value=s.wrong_count||'';
+  document.getElementById('e-blank').value=s.blank_count||'';
+  document.getElementById('e-sid').value=s.student_id||'';
+  document.getElementById('e-year').value=s.test_year||'';
+  document.getElementById('e-month').value=s.test_month||'';
+  document.getElementById('e-type').value=s.test_type||'';
   document.getElementById('edit-overlay').classList.add('open');
 }
-
-async function saveEdit() {
-  const s = currentStudent;
-  const updates = {
-    name:        document.getElementById('e-name').value,
-    rank:        parseInt(document.getElementById('e-rank').value) || null,
-    school:      document.getElementById('e-school').value,
-    score:       parseFloat(document.getElementById('e-score').value) || null,
-    t_score:     parseFloat(document.getElementById('e-tscore').value) || null,
-    right_count: parseInt(document.getElementById('e-right').value) || null,
-    wrong_count: parseInt(document.getElementById('e-wrong').value) || null,
-    blank_count: parseInt(document.getElementById('e-blank').value) || null,
-    student_id:  document.getElementById('e-sid').value,
+async function saveEdit(){
+  const s=currentStudent;
+  const u={
+    name:document.getElementById('e-name').value,
+    rank:parseInt(document.getElementById('e-rank').value)||null,
+    school:document.getElementById('e-school').value,
+    score:parseFloat(document.getElementById('e-score').value)||null,
+    t_score:parseFloat(document.getElementById('e-tscore').value)||null,
+    right_count:parseInt(document.getElementById('e-right').value)||null,
+    wrong_count:parseInt(document.getElementById('e-wrong').value)||null,
+    blank_count:parseInt(document.getElementById('e-blank').value)||null,
+    student_id:document.getElementById('e-sid').value,
+    test_year:parseInt(document.getElementById('e-year').value)||null,
+    test_month:document.getElementById('e-month').value||null,
+    test_type:document.getElementById('e-type').value||null,
   };
-  const { error } = await sb.from(s._table).update(updates).eq('id', s.id);
-  if (error) { toast('Error: ' + error.message, 'err'); return; }
-  // Update local cache
-  const idx = (divData[s._table] || []).findIndex(r => r.id === s.id);
-  if (idx !== -1) divData[s._table][idx] = { ...divData[s._table][idx], ...updates };
-  analyticsBuilt = false;
-  renderDivision();
+  const { error }=await sb.from(s._table).update(u).eq('id',s.id);
+  if(error){ toast('Error: '+error.message,'err'); return; }
+  const idx=(divData[s._table]||[]).findIndex(r=>r.id===s.id);
+  if(idx!==-1) divData[s._table][idx]={...divData[s._table][idx],...u};
+  analyticsBuilt=false; renderDivision();
   closeOverlay('edit-overlay');
-  toast('Record saved ✓', 'ok');
+  toast('Record saved ✓','ok');
+}
+async function deleteStudent(){
+  const s=currentStudent;
+  if(!confirm(`Delete ${s.name}? This cannot be undone.`)) return;
+  const { error }=await sb.from(s._table).delete().eq('id',s.id);
+  if(error){ toast('Error: '+error.message,'err'); return; }
+  divData[s._table]=(divData[s._table]||[]).filter(r=>r.id!==s.id);
+  analyticsBuilt=false; renderDivision(); closeProfile();
+  toast('Record deleted','ok');
 }
 
-async function deleteFromProfile() {
-  const s = currentStudent;
-  if (!confirm(`Delete ${s.name}? This cannot be undone.`)) return;
-  const { error } = await sb.from(s._table).delete().eq('id', s.id);
-  if (error) { toast('Error: ' + error.message, 'err'); return; }
-  divData[s._table] = (divData[s._table] || []).filter(r => r.id !== s.id);
-  analyticsBuilt = false;
-  renderDivision();
-  closeOverlay('profile-overlay');
-  toast('Record deleted', 'ok');
-}
-
-/* ═══════════════════════════════════════
-   ANALYTICS
-═══════════════════════════════════════ */
-function renderAnalytics() {
-  const rows = divData[currentDiv.table] || [];
-  if (!rows.length) return;
-
-  const divLabel = currentDiv.label;
-  document.getElementById('analytics-sub').textContent =
-    `${divLabel} · ${rows.length.toLocaleString()} students · ${new Set(rows.map(r=>r.school)).size} schools`;
-
-  const scores = rows.map(r => r.score||0).filter(x => x > 0);
-  const avg = scores.length ? (scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(2) : 0;
-  const maxS = scores.length ? Math.max(...scores) : 0;
-  const minS = scores.length ? Math.min(...scores) : 0;
-  const accs = rows.map(r => calcAcc(r));
-  const avgAcc = accs.length ? (accs.reduce((a,b)=>a+b,0)/accs.length).toFixed(1) : 0;
-  const totalRight = rows.reduce((a,r)=>a+(r.right_count||0),0);
-  const totalWrong = rows.reduce((a,r)=>a+(r.wrong_count||0),0);
-
-  document.getElementById('analytics-stats').innerHTML = `
+/* ═══════════ ANALYTICS ═══════════ */
+function renderAnalytics(){
+  const rows=divData[currentDiv.table]||[];
+  if(!rows.length) return;
+  const scores=rows.map(r=>r.score||0).filter(x=>x>0);
+  const avg=scores.length?(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(2):0;
+  const maxS=scores.length?Math.max(...scores):0, minS=scores.length?Math.min(...scores):0;
+  const accs=rows.map(r=>calcAcc(r));
+  const avgAcc=accs.length?(accs.reduce((a,b)=>a+b,0)/accs.length).toFixed(1):0;
+  const invRows=rows.filter(r=>r.test_type==='Inv'), regRows=rows.filter(r=>r.test_type==='Reg');
+  const invAvg=invRows.length?(invRows.reduce((a,r)=>a+(r.score||0),0)/invRows.length).toFixed(1):null;
+  const regAvg=regRows.length?(regRows.reduce((a,r)=>a+(r.score||0),0)/regRows.length).toFixed(1):null;
+  document.getElementById('analytics-sub').textContent=`${currentDiv.label} · ${rows.length.toLocaleString()} students`;
+  document.getElementById('analytics-stats').innerHTML=`
     <div class="sc"><div class="sc-label">Students</div><div class="sc-val">${rows.length.toLocaleString()}</div></div>
     <div class="sc"><div class="sc-label">Schools</div><div class="sc-val">${new Set(rows.map(r=>r.school)).size}</div></div>
-    <div class="sc"><div class="sc-label">Avg Score</div><div class="sc-val sm">${avg}</div></div>
+    <div class="sc"><div class="sc-label">Overall Avg</div><div class="sc-val sm">${avg}</div></div>
     <div class="sc"><div class="sc-label">Score Range</div><div class="sc-val sm">${minS}–${maxS}</div></div>
     <div class="sc"><div class="sc-label">Avg Accuracy</div><div class="sc-val sm">${avgAcc}%</div></div>
-    <div class="sc"><div class="sc-label">Total ✓ Answers</div><div class="sc-val sm">${totalRight.toLocaleString()}</div></div>
-  `;
-
+    ${invAvg?`<div class="sc"><div class="sc-label">★ Inv Avg</div><div class="sc-val sm inv">${invAvg}</div><div class="sc-sub">${invRows.length} results</div></div>`:''}
+    ${regAvg?`<div class="sc"><div class="sc-label">Reg Avg</div><div class="sc-val sm reg">${regAvg}</div><div class="sc-sub">${regRows.length} results</div></div>`:''}`;
   buildAnalyticsCharts(rows);
-
-  // Top 10
-  const top10 = [...rows].sort((a,b)=>(b.score||0)-(a.score||0)).slice(0,10);
-  document.getElementById('top10-tbl').innerHTML = top10.map((s,i) => `
-    <tr>
-      <td class="top-pos">${i+1}</td>
-      <td><span class="top-name">${escHtml(s.name||'—')}<span class="top-school">${escHtml(s.school||'—')}</span></span></td>
-      <td class="top-score">${s.score??'—'}</td>
-    </tr>
-  `).join('');
+  document.getElementById('top10-tbl').innerHTML=[...rows].sort((a,b)=>(b.score||0)-(a.score||0)).slice(0,10).map((s,i)=>`
+    <tr><td class="top-pos">${i+1}</td>
+    <td><span class="top-name">${esc(s.name||'—')}<span class="top-school">${esc(s.school||'—')}${s.test_type?` · ${s.test_type}`:''}</span></span></td>
+    <td class="top-score">${s.score??'—'}</td></tr>`).join('');
+}
+function buildAnalyticsCharts(rows){
+  const scores=rows.map(r=>r.score||0).filter(x=>x>=0);
+  if(!scores.length) return;
+  const mn=Math.floor(Math.min(...scores)), mx=Math.ceil(Math.max(...scores));
+  const bk=Math.max(1,Math.round((mx-mn)/20));
+  const buckets={};
+  for(let i=mn;i<=mx;i+=bk) buckets[i]=0;
+  scores.forEach(sc=>{const b=Math.floor(sc/bk)*bk; buckets[b]=(buckets[b]||0)+1;});
+  ['c-dist','c-schools'].forEach(id=>{const c=Chart.getChart(id);if(c)c.destroy();});
+  const gc='rgba(255,255,255,.04)', tc='#5a6480', mf={family:"'JetBrains Mono'"};
+  new Chart(document.getElementById('c-dist'),{type:'bar',data:{labels:Object.keys(buckets),datasets:[{data:Object.values(buckets),backgroundColor:'rgba(240,192,64,.2)',borderColor:'rgba(240,192,64,.7)',borderWidth:1,borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:tc,font:mf},grid:{color:gc}},y:{ticks:{color:tc,font:mf},grid:{color:gc}}}}});
+  const sm={};
+  rows.forEach(r=>{if(!r.school)return;if(!sm[r.school])sm[r.school]=[];sm[r.school].push(r.score||0);});
+  const sa=Object.entries(sm).map(([k,v])=>({school:k,avg:v.reduce((a,b)=>a+b,0)/v.length})).sort((a,b)=>b.avg-a.avg).slice(0,15);
+  new Chart(document.getElementById('c-schools'),{type:'bar',data:{labels:sa.map(s=>s.school),datasets:[{data:sa.map(s=>+s.avg.toFixed(2)),backgroundColor:'rgba(79,142,247,.2)',borderColor:'rgba(79,142,247,.7)',borderWidth:1,borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{color:tc,font:mf},grid:{color:gc}},y:{ticks:{color:tc,font:{...mf,size:10}},grid:{color:gc}}}}});
 }
 
-function buildAnalyticsCharts(rows) {
-  const scores = rows.map(r=>r.score||0).filter(x=>x>=0);
-  if (!scores.length) return;
-
-  const mn = Math.floor(Math.min(...scores));
-  const mx = Math.ceil(Math.max(...scores));
-  const bk = Math.max(1, Math.round((mx-mn)/20));
-  const buckets = {};
-  for (let i=mn; i<=mx; i+=bk) buckets[i]=0;
-  scores.forEach(sc => { const b=Math.floor(sc/bk)*bk; buckets[b]=(buckets[b]||0)+1; });
-
-  ['c-dist','c-schools'].forEach(id => { const c=Chart.getChart(id); if(c) c.destroy(); });
-
-  const gridC = 'rgba(255,255,255,0.04)';
-  const tickC = '#5a6480';
-  const monoFont = { family: "'JetBrains Mono'" };
-
-  new Chart(document.getElementById('c-dist'), {
-    type: 'bar',
-    data: {
-      labels: Object.keys(buckets),
-      datasets: [{
-        data: Object.values(buckets),
-        backgroundColor: 'rgba(240,192,64,0.2)',
-        borderColor: 'rgba(240,192,64,0.7)',
-        borderWidth: 1, borderRadius: 2,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { ticks: { color: tickC, font: monoFont }, grid: { color: gridC } },
-        y: { ticks: { color: tickC, font: monoFont }, grid: { color: gridC } }
-      }
-    }
-  });
-
-  // School averages
-  const sm = {};
-  rows.forEach(r => {
-    if (!r.school) return;
-    if (!sm[r.school]) sm[r.school] = [];
-    sm[r.school].push(r.score||0);
-  });
-  const sa = Object.entries(sm)
-    .map(([k,v]) => ({ school:k, avg:v.reduce((a,b)=>a+b,0)/v.length, count:v.length }))
-    .sort((a,b) => b.avg-a.avg).slice(0,15);
-
-  new Chart(document.getElementById('c-schools'), {
-    type: 'bar',
-    data: {
-      labels: sa.map(s => s.school),
-      datasets: [{
-        data: sa.map(s => +s.avg.toFixed(2)),
-        backgroundColor: 'rgba(79,142,247,0.2)',
-        borderColor: 'rgba(79,142,247,0.7)',
-        borderWidth: 1, borderRadius: 2,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false, indexAxis: 'y',
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { ticks: { color: tickC, font: monoFont }, grid: { color: gridC } },
-        y: { ticks: { color: tickC, font: { ...monoFont, size: 10 } }, grid: { color: gridC } }
-      }
-    }
-  });
+/* ═══════════ ADMIN ═══════════ */
+async function adminCreate(){
+  const name=document.getElementById('a-name').value.trim(), email=document.getElementById('a-email').value.trim(), pass=document.getElementById('a-pass').value;
+  const n=document.getElementById('a-notice'); n.style.display='none';
+  if(!email||!pass){n.textContent='Email and password required.';n.className='admin-notice err';n.style.display='block';return;}
+  const {error}=await sb.auth.signUp({email,password:pass,options:{data:{full_name:name}}});
+  if(error){n.textContent=error.message;n.className='admin-notice err';n.style.display='block';return;}
+  n.textContent=`✓ Account created for ${email}`;n.className='admin-notice ok';n.style.display='block';
+  document.getElementById('a-name').value='';document.getElementById('a-email').value='';document.getElementById('a-pass').value='';
 }
 
-/* ═══════════════════════════════════════
-   ADMIN
-═══════════════════════════════════════ */
-async function adminCreate() {
-  const name  = document.getElementById('a-name').value.trim();
-  const email = document.getElementById('a-email').value.trim();
-  const pass  = document.getElementById('a-pass').value;
-  const n = document.getElementById('a-notice');
-  n.style.display = 'none';
-  if (!email || !pass) { n.textContent = 'Email and password required.'; n.className = 'admin-notice err'; n.style.display = 'block'; return; }
-  const { error } = await sb.auth.signUp({ email, password: pass, options: { data: { full_name: name } } });
-  if (error) { n.textContent = error.message; n.className = 'admin-notice err'; n.style.display = 'block'; return; }
-  n.textContent = `✓ Account created for ${email}`;
-  n.className = 'admin-notice ok'; n.style.display = 'block';
-  document.getElementById('a-name').value = '';
-  document.getElementById('a-email').value = '';
-  document.getElementById('a-pass').value = '';
+/* ═══════════ NAVIGATION ═══════════ */
+function switchView(name,btn){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-pill').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(name==='analytics'&&!analyticsBuilt){ renderAnalytics(); analyticsBuilt=true; }
 }
 
-/* ═══════════════════════════════════════
-   VIEW NAVIGATION
-═══════════════════════════════════════ */
-function switchView(view, btn) {
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('.nav-pill').forEach(b => b.classList.remove('active'));
-  document.getElementById('view-' + view).classList.add('active');
-  if (btn) btn.classList.add('active');
-
-  if (view === 'analytics') {
-    if (!analyticsBuilt) { renderAnalytics(); analyticsBuilt = true; }
-  }
-}
-
-/* ═══════════════════════════════════════
-   OVERLAY HELPERS
-═══════════════════════════════════════ */
-function closeOverlay(id) { document.getElementById(id).classList.remove('open'); }
-
-document.querySelectorAll('.overlay').forEach(o => {
-  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
-});
-
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open'));
-});
-
-/* ═══════════════════════════════════════
-   TOAST
-═══════════════════════════════════════ */
-function toast(msg, type = '') {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast ' + type;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
-}
-
-/* ═══════════════════════════════════════
-   UTILS
-═══════════════════════════════════════ */
-function escHtml(str) {
-  return String(str)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;');
-}
+/* ═══════════ UTILS ═══════════ */
+function closeOverlay(id){ document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeProfile(); document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open')); } });
+function toast(msg,type=''){ const t=document.getElementById('toast'); t.textContent=msg; t.className='toast '+type; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function percentileOf(sorted,val){ if(!sorted.length) return 0; return sorted.filter(v=>v<val).length/sorted.length*100; }
+function stdDev(arr){ if(arr.length<2) return 0; const m=arr.reduce((a,b)=>a+b,0)/arr.length; return Math.sqrt(arr.reduce((a,b)=>a+(b-m)**2,0)/arr.length); }
 </script>
 </body>
 </html>
